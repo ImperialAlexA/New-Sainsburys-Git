@@ -32,6 +32,7 @@ PV_array = []
 CHP_array = []
 Capex_array = []
 OPEX_array = []
+Carbon_array = []
 id_store = 2001
 
 
@@ -41,7 +42,7 @@ for tech_id in range(1,20):
     CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
     CHP_tech_price = (dummy[0][2])
     CHP_opex=BBC.CHPproblem(id_store).SimpleOpti5NPV(tech_range=[tech_id,tech_id])[4][0]
-    
+    CHP_Carbon=BBC.CHPproblem(id_store).SimpleOpti5NPV(tech_range=[tech_id,tech_id])[5][2]
     
     for n_panels in panel_range:
         tech_id = 1
@@ -50,20 +51,23 @@ for tech_id in range(1,20):
         PV_tech_price = dummy[0][2]
         PV_capex = dummy[0][2]*n_panels
         PV_opex = pb.PVproblem(id_store).SimulatePVonAllRoof(tech_id,n_panels)[1]
+        PV_Carbon = pb.PVproblem(id_store).SimulatePVonAllRoof(tech_id,n_panels)[4]
         
         PV_array.append(n_panels)
         CHP_array.extend(CHP_tech_size)
         Capex_array.append(CHP_tech_price+PV_capex)
         OPEX_array.append(CHP_opex+PV_opex)
+        Carbon_array.append(PV_Carbon+CHP_Carbon)
 
 
 ind_variable = [PV_array,CHP_array]
 dep_variable1 = Capex_array
-dep_variable2 =OPEX_array
+dep_variable2 = OPEX_array
+dep_variable3 = Carbon_array
 ind_variable = np.array(ind_variable, dtype=np.float64)
 dep_variable1 = np.array(dep_variable1, dtype=np.float64)
 dep_variable2 = np.array(dep_variable2, dtype=np.float64)
-
+dep_variable3 = np.array(dep_variable3, dtype=np.float64)
 
 def func1(x, a, b, c): 
     return a*x[0] + b*x[1] + c
@@ -104,6 +108,27 @@ ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
 ax.set_xlabel('PV', labelpad=8)
 ax.set_ylabel('CHP', labelpad=8)
 ax.set_zlabel('OPEX',labelpad=8)
+ax.tick_params(axis='both', which='major', pad=3)
+plt.show()
+
+def func3(x, a, b, c): 
+    return a*x[0] + b*x[1] + c
+# a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+popt3, pcov3 = curve_fit(func3, ind_variable, dep_variable3)
+
+fig = plt.figure(3)
+ax = Axes3D(fig)
+ax.scatter(ind_variable[0], ind_variable[1], dep_variable3, zdir='z', s=20, c='r', depthshade=True)
+x1 = np.linspace(min(ind_variable[0]), max(ind_variable[0]),len(ind_variable[0]))
+x2 = np.linspace(min(ind_variable[1]), max(ind_variable[1]),len(ind_variable[1]))
+x = [x1,x2]
+X1, X2 = np.meshgrid(x1, x2)
+zs = np.array([func3([x1, x2],*popt3) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
+Z = zs.reshape(X1.shape)
+ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
+ax.set_xlabel('PV', labelpad=8)
+ax.set_ylabel('CHP', labelpad=8)
+ax.set_zlabel('Carbon',labelpad=8)
 ax.tick_params(axis='both', which='major', pad=3)
 plt.show()
 
