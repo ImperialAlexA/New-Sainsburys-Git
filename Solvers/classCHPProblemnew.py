@@ -18,8 +18,8 @@ import Common.classTech as tc
 #from pyomo.environ import * # Linear programming module
 #import pyomo as pyo
 #import pyomo.environ as pyo
-from pyomo.environ import *
-from pyomo.opt import SolverFactory # Solver
+#from pyomo.environ import *
+#from pyomo.opt import SolverFactory # Solver
 import time # To time code, simply use start = time.clock() then print start - time.clock()
 
 

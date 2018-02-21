@@ -8,7 +8,7 @@ import sqlite3
 import numpy as np
 
 #database_path = "C:\\Users\\GOBS\\Dropbox\\Uni\Other\\UROP - Salvador\\Niccolo_project\\Code\\Sainsburys.sqlite" # Path to database file
-database_path = ".\\Sainsburys.sqlite" # Path to database file
+database_path = "Sainsburys.sqlite" # Path to database file
 
 
 class tech:

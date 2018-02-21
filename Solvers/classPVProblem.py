@@ -43,6 +43,7 @@ class PVproblem:
         self.hidden_cost=2000 #£
         self.Roof_space_coeff=0.6 
         self.roof_available_area= self.roof_area*self.Roof_space_coeff #m2
+        self.cf_ele=0.412 #kgCO2/kWh
         
         
         
@@ -102,31 +103,35 @@ class PVproblem:
                 Total_capex = N_panel * panel_price + self.hidden_cost 
                 Opex_savings = Total_Elec_prod *(elec_price)*10**(-2) #+policies) 
                 op_cost_HH_pound = (Elec_grid-Elec_surplus)*elec_price*10**(-2) + gas_demand*gas_price*10**(-2)
+                BAU_carbon=Store_demand*self.cf_ele/ 1000 # (tCO2)
+                Carbon_PV=Total_Elec_prod*self.cf_ele/ 1000 # (tCO2)
+                Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
                 if np.sum(Opex_savings) > opti_savings: 
                     best_tech = tech_name
                     opti_capex=Total_capex
                     opti_ele_prod=Total_Elec_prod
                     opti_savings= np.sum(Opex_savings)
                     opti_panel=N_panel
+                    opti_carbon=Carbon_savings
                 else:
                     pass 
-            return (best_tech, opti_savings, opti_capex,opti_ele_prod,opti_panel)
+            return (best_tech, opti_savings, opti_capex,opti_ele_prod,opti_panel,opti_carbon)
 
-        def calculate_financials(self, discount_rate, tech_lifetime, year_BAU_cost, year_op_cost, Total_capex):
-            numb_years = 10 #(self.time_stop-self.time_start)/2/24/365
-            year_op_cost = sum(op_cost_HH_pound)/numb_years
-            year_BAU_cost = 1330 #sum(BAU_op_cost_HH_pound)/numb_years
-            year_savings = year_BAU_cost - year_op_cost
-            payback = Total_capex / year_savings
-            ann_capex = -np.pmt(discount_rate, tech_lifetime, Total_capex)
-            year_cost = year_op_cost + ann_capex
-            NPV5_op_cost = -np.npv(discount_rate, np.array([year_cost] * 5))
-            NPV5_BAU_cost = -np.npv(discount_rate, np.array([year_BAU_cost] * 5))
-            NPV5savings = NPV5_op_cost - NPV5_BAU_cost
-            ROI = year_savings / Total_capex
-            Const = (1 - (1 + discount_rate) ** (-tech_lifetime)) / discount_rate
-            Cum_disc_cash_flow = -Total_capex + Const * year_savings
-            return (year_savings, payback, NPV5savings, ROI, Cum_disc_cash_flow)
+    def calculate_financials(self, discount_rate, tech_lifetime, year_BAU_cost, year_op_cost, Total_capex):
+        numb_years = 10 #(self.time_stop-self.time_start)/2/24/365
+        year_op_cost = sum(op_cost_HH_pound)/numb_years
+        year_BAU_cost = 1330 #sum(BAU_op_cost_HH_pound)/numb_years
+        year_savings = year_BAU_cost - year_op_cost
+        payback = Total_capex / year_savings
+        ann_capex = -np.pmt(discount_rate, tech_lifetime, Total_capex)
+        year_cost = year_op_cost + ann_capex
+        NPV5_op_cost = -np.npv(discount_rate, np.array([year_cost] * 5))
+        NPV5_BAU_cost = -np.npv(discount_rate, np.array([year_BAU_cost] * 5))
+        NPV5savings = NPV5_op_cost - NPV5_BAU_cost
+        ROI = year_savings / Total_capex
+        Const = (1 - (1 + discount_rate) ** (-tech_lifetime)) / discount_rate
+        Cum_disc_cash_flow = -Total_capex + Const * year_savings
+        return (year_savings, payback, NPV5savings, ROI, Cum_disc_cash_flow)
 
 
 
@@ -157,6 +162,10 @@ class PVproblem:
         Store_demand = self.store.d_ele
         gas_demand=self.store.d_gas
 
+        max_panel_number=int(self.roof_available_area / tech_area)
+        
+        if N_panel>max_panel_number:
+            N_panel=max_panel_number
         
         if tech_weight / tech_area < self.roof_max_weight:
                 #irradiance = np.array([0,0,1,2,3,6,3,2,1,0,0])
@@ -176,12 +185,16 @@ class PVproblem:
                     
                     #policies=0.001
                     #gas_demand = np.array([0, 0, 1, 3, 2, 3, 9, 15, 31, 6, 0])
+            BAU_carbon=Store_demand*self.cf_ele/ 1000 # (tCO2)
+            Carbon_PV=Total_Elec_prod*self.cf_ele/ 1000 # (tCO2)
+            Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
+            Annual_Carbon_savings=np.sum(Carbon_savings)
             Total_capex = N_panel * panel_price + self.hidden_cost 
             Opex_savings = Total_Elec_prod *(elec_price)*10**(-2) #+policies) 
             Annual_Opex_savings=np.sum(Opex_savings)
             op_cost_HH_pound = (Elec_grid-Elec_surplus)*elec_price*10**(-2) + gas_demand*gas_price*10**(-2)
                    
-        return (tech_name, Annual_Opex_savings, Total_capex, Annual_Elec_prod)
+        return (tech_name, Annual_Opex_savings, Total_capex, Annual_Elec_prod,Annual_Carbon_savings,N_panel)
                 # get tech data
                 # connect to database
                 # retrieve data
