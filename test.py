@@ -21,19 +21,22 @@ database_path = "Sainsburys.sqlite"
 conn = sqlite3.connect(database_path)
 cur = conn.cursor()
 
+id_store = 2001
+PV_tech_id = 1
 tech_name = []
 tech_price = []
 PV_tech_price = []
 CHP_tech_size = []
 CHP_tech_price = []
 PV_capex = []
-panel_range = np.arange(0,1000,250)
 PV_array = []
 CHP_array = []
 Capex_array = []
 OPEX_array = []
 Carbon_array = []
-id_store = 2001
+
+max_panels = pb.PVproblem(id_store).Max_panel_number(PV_tech_id)
+panel_range = np.linspace(0,max_panels,2)
 
 
 for tech_id in range(1,20):
@@ -45,13 +48,12 @@ for tech_id in range(1,20):
     CHP_Carbon=BBC.CHPproblem(id_store).SimpleOpti5NPV(tech_range=[tech_id,tech_id])[5][2]
     
     for n_panels in panel_range:
-        tech_id = 1
-        cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (tech_id,))
+        cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (PV_tech_id,))
         dummy = cur.fetchall()
         PV_tech_price = dummy[0][2]
         PV_capex = dummy[0][2]*n_panels
-        PV_opex = pb.PVproblem(id_store).SimulatePVonAllRoof(tech_id,n_panels)[1]
-        PV_Carbon = pb.PVproblem(id_store).SimulatePVonAllRoof(tech_id,n_panels)[4]
+        PV_opex = pb.PVproblem(id_store).SimulatePVonAllRoof(PV_tech_id,n_panels)[1]
+        PV_Carbon = pb.PVproblem(id_store).SimulatePVonAllRoof(PV_tech_id,n_panels)[4]
         
         PV_array.append(n_panels)
         CHP_array.extend(CHP_tech_size)
@@ -90,10 +92,12 @@ ax.set_zlabel('Capex',labelpad=8)
 ax.tick_params(axis='both', which='major', pad=3)
 plt.show()
     
-def func2(x, a, b, c): 
+def func2(x, a, b, c, d): 
     return a*x[0] + b*x[1] + c
 # a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-popt2, pcov2 = curve_fit(func2, ind_variable, dep_variable2)
+    
+init_guess = [10000,1,10000,1]
+popt2, pcov2 = curve_fit(func2, ind_variable, dep_variable2, init_guess)
 
 fig = plt.figure(2)
 ax = Axes3D(fig)
