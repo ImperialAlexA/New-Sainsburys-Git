@@ -154,7 +154,7 @@ class store:
             conn.commit() 
           ##get carbon factor (utilising 2016)
         self.crc = 16.1 #£/tCo2
-        self.cf_ele = 0.412 #kgCO2/kWh
+        self.cf_ele = 0.370845 #kgCO2/kWh
         self.cf_gas = 0.184 #kgCO2/kWh
         self.cf_diesel = 0.244 #kgCO2/kWh    
             
