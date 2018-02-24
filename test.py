@@ -114,11 +114,12 @@ plt.show()
 def func3(x, a, b, c): 
     return a*x[0] + b*x[1] + c
 # a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-popt3, pcov3 = curve_fit(func3, ind_variable, dep_variable3)
+init_guess = [10000,10000,10000]  # 3 when 1 independant variable, 4 when 2 independant variables
+popt3, pcov3 = curve_fit(func3, ind_variable, dep_variable3,init_guess)
 
 fig = plt.figure(3)
 ax = Axes3D(fig)
-ax.scatter(ind_variable[0], ind_variable[1], dep_variable3, zdir='z', s=20, c='r', depthshade=True)
+ax.scatter(ind_variable[0], ind_variable[1], dep_variable2, zdir='z', s=20, c='r', depthshade=True)
 x1 = np.linspace(min(ind_variable[0]), max(ind_variable[0]),len(ind_variable[0]))
 x2 = np.linspace(min(ind_variable[1]), max(ind_variable[1]),len(ind_variable[1]))
 x = [x1,x2]
