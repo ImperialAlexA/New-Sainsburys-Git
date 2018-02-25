@@ -112,7 +112,7 @@ class PVproblem:
                 Opex_savings = Total_Elec_prod *(elec_price)*10**(-2) #+policies) 
                 op_cost_HH_pound = (Elec_grid-Elec_surplus)*elec_price*10**(-2) + gas_demand*gas_price*10**(-2)
                 BAU_carbon = (Elec_demand*self.cf_ele + gas_demand*self.cf_gas)/ 1000 # (tCO2)
-                Carbon_PV=((Elec_demand-Total_Elec_prod)*self.cf_ele + gas_demand*self.cf_gas)/ 1000 # (tCO2)
+                Carbon_PV=(Elec_grid*self.cf_ele + gas_demand*self.cf_gas)/ 1000 # (tCO2)
                 Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
                 if np.sum(Opex_savings) > opti_savings: 
                     best_tech = tech_name
