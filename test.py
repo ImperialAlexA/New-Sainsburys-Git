@@ -130,6 +130,7 @@ ax.scatter(ind_variable[0], ind_variable[1], dep_variable3, zdir='z', s=20, c='r
 
 x1 = np.linspace(min(ind_variable[0,:k]), max(ind_variable[0,:k]),len(ind_variable[0,:k]))
 x2 = np.linspace(min(ind_variable[1,:k]), max(ind_variable[1,:k]),len(ind_variable[1,:k]))
+
 x = [x1,x2]
 X1, X2 = np.meshgrid(x1, x2)
 zs = np.array([func3([x1, x2],*popt3) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
