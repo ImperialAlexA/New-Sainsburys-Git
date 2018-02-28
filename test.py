@@ -23,7 +23,7 @@ database_path = "Sainsburys.sqlite"
 conn = sqlite3.connect(database_path)
 cur = conn.cursor()
 
-id_store = 51
+id_store = 2003
 PV_tech_id = 1
 PV_tech_price = []
 CHP_tech_size = []
@@ -44,8 +44,12 @@ for tech_id in range(1,20):
     dummy = cur.fetchall()
     CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
     CHP_tech_price = (dummy[0][2])
-    CHP_opex=BBC.CHPproblem(id_store).SimpleOpti5NPV(tech_range=[tech_id,tech_id])[4][0]
-    CHP_Carbon=BBC.CHPproblem(id_store).SimpleOpti5NPV(tech_range=[tech_id,tech_id])[5][2]
+    CHP_opex=BBC.CHPproblem(id_store).SimpleOpti5NPV(tech_range=[tech_id,tech_id],mod = [11.9/8.787,2.35/2.618,1,1], ECA_value = 0.26, table_string = 'Utility_Prices_Aitor _NoGasCCL')[4][0]
+    CHP_Carbon=BBC.CHPproblem(id_store).SimpleOpti5NPV(tech_range=[tech_id,tech_id],mod = [11.9/8.787,2.35/2.618,1,1], ECA_value = 0.26, table_string = 'Utility_Prices_Aitor _NoGasCCL')[5][2]
+    
+    
+    #PV_pb = pb.PVproblem(id_store)
+    #old_d_ele = PV_pb.store.d_ele
     
     for n_panels in panel_range:
         cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (PV_tech_id,))
@@ -61,6 +65,7 @@ for tech_id in range(1,20):
         OPEX_array.append(CHP_opex+PV_opex)
         Carbon_array.append(PV_Carbon+CHP_Carbon)
 
+        #PV.store.d_ele = old_d_ele - pv generated
 
 ind_variable = [PV_array,CHP_array]
 dep_variable1 = Capex_array
@@ -130,7 +135,6 @@ ax.scatter(ind_variable[0], ind_variable[1], dep_variable3, zdir='z', s=20, c='r
 
 x1 = np.linspace(min(ind_variable[0,:k]), max(ind_variable[0,:k]),len(ind_variable[0,:k]))
 x2 = np.linspace(min(ind_variable[1,:k]), max(ind_variable[1,:k]),len(ind_variable[1,:k]))
-
 x = [x1,x2]
 X1, X2 = np.meshgrid(x1, x2)
 zs = np.array([func3([x1, x2],*popt3) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
