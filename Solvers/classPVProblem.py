@@ -199,7 +199,7 @@ class PVproblem:
             Annual_Opex_savings=np.sum(Opex_savings)
             op_cost_HH_pound = (Elec_grid-Elec_surplus)*elec_price*10**(-2) + gas_demand*gas_price*10**(-2)
                    
-        return (tech_name, Annual_Opex_savings, Total_capex, Annual_Elec_prod,Annual_Carbon_savings,N_panel)
+        return (tech_name, Annual_Opex_savings, Total_capex, Annual_Elec_prod,Annual_Carbon_savings,N_panel, Total_Elec_prod)
                 # get tech data
                 # connect to database
                 # retrieve data

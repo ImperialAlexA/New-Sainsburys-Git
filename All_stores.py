@@ -35,20 +35,37 @@ OPEX_p = []
 CARBON_p1 = []
 CARBON_p2 = []
 
+#Scenario Parameters
+num_years = 2050-2018
+num_periods = 3
+Periods_length = num_years/num_periods
+Elec_price_var= 1.06 # 6% increase p.a.
+Gas_price_var= 1.03 # 3% increase p.a.
+PV_price_var= 0.90 # 10% decrease p.a.
+#CHP_price_var=?
 
-for store_id in Store_id_range:
-    print(store_id)
-    solution = PC.PV_CHP(store_id).function_approx()
-    CAPEX_p.append(solution[0])
-    OPEX_p.append(solution[1])
-    CARBON_p1.append(solution[2])
-    CARBON_p2.append(solution[3])
-    CAPEX_fit.append(solution[4])
-    OPEX_fit.append(solution[5])
-    CARBON_fit.append(solution[6])
+p_elec_mod_array =[]
+p_gas_mod_array = []
+for y in range(0, num_years):
+    p_elec_mod_array.append(Elec_price_var**y)
+    p_gas_mod_array.append(Gas_price_var**y)
+
+p_elec_mod = []
+p_gas_mod = []
+for i in range(0, len(p_elec_mod_array), int(Periods_length)):
+    p_elec_mod.append(np.average(p_elec_mod_array[i:i + int(Periods_length)]))
+    p_gas_mod.append(np.average(p_gas_mod_array[i:i + int(Periods_length)]))
+
+
+for store_id in Store_id_range[:1]:
+    for n in range(0,num_periods):
+        solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n]).function_approx()
+        
+#        CAPEX_p.append(solution[0])
+        OPEX_p.append(solution[1])
+#        CARBON_p1.append(solution[2])
+#        CARBON_p2.append(solution[3])
+#        CAPEX_fit.append(solution[4])
+#        OPEX_fit.append(solution[5])
+#        CARBON_fit.append(solution[6])
     
-plt.figure(1)   
-plt.scatter(Store_id_range[:14],np.array(CARBON_fit)[:,3])
-
-plt.figure(2)
-plt.scatter(Store_id_range[:5], np.array(OPEX_fit)[:,3])

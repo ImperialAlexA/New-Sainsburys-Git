@@ -32,8 +32,8 @@ class CHPproblem:
     def __init__(self, store_id):
         self.store = st.store(store_id)
         self.price_table = 'Utility_Prices_Aitor'
-        default_initial_time = datetime.datetime(2015,1,1)
-        default_final_time = datetime.datetime(2016,1,1)
+        default_initial_time = datetime.datetime(2016,1,1)
+        default_final_time = datetime.datetime(2017,1,1)
         self.time_start= int((default_initial_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
         self.time_stop= int((default_final_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
         self.store.getSimplePrice(self.time_start, self.time_stop, self.price_table)
