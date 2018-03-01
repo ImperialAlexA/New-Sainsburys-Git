@@ -123,7 +123,7 @@ popt3, pcov3 = curve_fit(func3, ind_variable, dep_variable3,init_guess)
 
 fig = plt.figure(3)
 ax = Axes3D(fig)
-ax.scatter(ind_variable[0], ind_variable[1], dep_variable2, zdir='z', s=20, c='r', depthshade=True)
+ax.scatter(ind_variable[0], ind_variable[1], dep_variable3, zdir='z', s=20, c='r', depthshade=True)
 x1 = np.linspace(min(ind_variable[0]), max(ind_variable[0]),len(ind_variable[0]))
 x2 = np.linspace(min(ind_variable[1]), max(ind_variable[1]),len(ind_variable[1]))
 x = [x1,x2]
