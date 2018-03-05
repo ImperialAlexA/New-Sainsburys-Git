@@ -28,8 +28,6 @@ cur.execute('''SELECT Stores_id FROM Demand_Check Where Ele= {vn1} and Gas= {vn2
 Index = cur.fetchall()
 Store_id_range = np.array([elt[0] for elt in Index],dtype=np.float64)
 
-
-
 #Scenario Parameters
 #num_years = 2050-2018
 #num_periods = 3
@@ -50,10 +48,14 @@ Store_id_range = np.array([elt[0] for elt in Index],dtype=np.float64)
 #for i in range(0, len(p_elec_mod_array), int(Periods_length)):
 #    p_elec_mod.append(np.average(p_elec_mod_array[i:i + int(Periods_length)]))
 #    p_gas_mod.append(np.average(p_gas_mod_array[i:i + int(Periods_length)]))
+
+
 time_window = 2
 stores = 2
 year_start = 2020
 year_stop = 2050
+tech_range = ['PV', 'CHP','dummy','ppa']
+modular = np.array([1,0,1,1])
 
 ele_price_increase = 0.06  # % electricity price increase each year
 gas_price_increase = 0.03 # 3% increase p.a.
@@ -72,17 +74,28 @@ PV_mod = np.power(1+capex_reduction_PV, np.linspace(year_start,year_stop, time_w
 
 matrix = []
 CAPEX = []
+
+
+Carbon_matrix =[]
+OPEX_matrix = []
 for store_id in Store_id_range[:stores]:
+    Carbonh = []
+    OPEXh = []
     for n in range(0,time_window):
-        
+
         solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n], p_gas_mod=p_gas_mod[n], PV_price_mod= PV_mod[n], CHP_price_mod=CHP_mod[n]).function_approx()
         OPEX_p = solution[1]
         CARBON_p1 = solution[2]
         CARBON_p2 = solution[3]
         CAPEX_p =  solution[0]
-
-        matrix.append([store_id, year[n], OPEX_p, CARBON_p1, CARBON_p2, CAPEX_p])
-
+        
+        Carbonh.append(CARBON_p1)
+        OPEXh.append(OPEX_p)
+        
+    Carbon_matrix.append(Carbonh)
+    OPEX_matrix.append(OPEXh)
+    
+#        matrix.append([OPEX_p, CARBON_p1, CARBON_p2, CAPEX_p])
 
 ############################################
 ### generate GAMS gdx file ###    
@@ -91,31 +104,56 @@ GAMS_model = "Strategic.gms"
 ws = GamsWorkspace()
 db =ws.add_database()
 
-time_set = np.char.mod('%d', range(len(matrix)))
+time_set = np.char.mod('%d', year)
+store_set = np.char.mod('%d', Store_id_range[:stores])
+tech_set = np.array(tech_range)
+
+tech = db.add_set("tech",1,"")
 t = db.add_set("t",1,"")
-for n in time_set:
-    print(n)
-    t.add_record(n)
+s = db.add_set("s",1,"")
+
+#for n in time_set:
+#    print(n)
+#    t.add_record(n)
+
+
+for n in tech_set:
+    tech.add_record(n)
+for m in time_set:
+    t.add_record(m)
+for z in store_set:
+    s.add_record(z)
     
-p0 = db.add_parameter_dc("Store", [t], "")  
-p1 = db.add_parameter_dc("Date", [t], "")
-p2 = db.add_parameter_dc("OPEX_11", [t], "")
-p3 = db.add_parameter_dc("OPEX_12", [t], "")
-p4 = db.add_parameter_dc("OPEX_13", [t], "")
-#p3 = db.add_parameter_dc("OPEX_2", [t], "")
-p5 = db.add_parameter_dc("Carbon_11", [t], "")
-p6 = db.add_parameter_dc("Carbon_12", [t], "")
-p7 = db.add_parameter_dc("Carbon_13", [t], "")
-p8 = db.add_parameter_dc("Carbon_21", [t], "")
-p9 = db.add_parameter_dc("Carbon_22", [t], "")
-p10 = db.add_parameter_dc("Carbon_23", [t], "")
-p11 = db.add_parameter_dc("Capex1", [t], "")
-p12 = db.add_parameter_dc("Capex2", [t], "")
-p13 = db.add_parameter_dc("Capex3", [t], "")
+p0 = db.add_parameter_dc("K_CO2", [tech,t,s], "")
+p1 = db.add_parameter_dc("K_opex", [tech,t,s], "")
+p2 = db.add_parameter_dc("K0_capex", [tech,t], "")
+p3 = db.add_parameter_dc("K1_capex", [tech,t], "")
+p4 = db.add_parameter_dc("CO2_savingTarget", [t], "")
+p5 = db.add_parameter_dc("Max_x", [tech,t,s], "")
+p6 = db.add_parameter_dc("IO_modular", [tech], "")
        
-for i in range(len(matrix)):
-    time_i = time_set[i]
-    p0.add_record(time_i).value = matrix[i][0]
+for i in range(len(tech_set)-1):
+    tech_i = tech_set[i]
+#    p6.add_record(tech_i).value = modular[i]
+    
+    for j in range(len(time_set)-1):
+        time_j = time_set[j] 
+#        p2.add_record(time_i).value = 
+#        p3.add_record(time_j).value =
+
+        for z in range(len(store_set)-1):
+            store_z = store_set[z]
+                      
+            p0.add_record([tech_i, time_j, store_z]).value = Carbon_matrix[z][j][i]
+            
+            p1.add_record(tech_i, time_j, store_z).value = 
+            p5.add_record(tech_i, time_j, store_z).value = 
+
+
+
+    
+    for j in range()
+        p0.add_record(tech_i, time_i, store_i).value = matrix[i][0]
     p1.add_record(time_i).value = matrix[i][1]
     p2.add_record(time_i).value = matrix[i][2][0]
     p3.add_record(time_i).value = matrix[i][2][1]
