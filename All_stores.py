@@ -54,8 +54,8 @@ time_window = 2
 stores = 2
 year_start = 2020
 year_stop = 2050
-tech_range = ['PV', 'CHP','dummy','ppa']
-modular = np.array([1,0,1,1])
+tech_range = ['PV', 'CHP','dummy']
+modular = [1,0,1]
 
 ele_price_increase = 0.06  # % electricity price increase each year
 gas_price_increase = 0.03 # 3% increase p.a.
@@ -132,22 +132,21 @@ p4 = db.add_parameter_dc("CO2_savingTarget", [t], "")
 p5 = db.add_parameter_dc("Max_x", [tech,t,s], "")
 p6 = db.add_parameter_dc("IO_modular", [tech], "")
        
-for i in range(len(tech_set)-1):
+for i in range(len(tech_set)):
     tech_i = tech_set[i]
-#    p6.add_record(tech_i).value = modular[i]
+    p6.add_record(tech_i).value = modular[i]
     
-    for j in range(len(time_set)-1):
+    for j in range(len(time_set)):
         time_j = time_set[j] 
 #        p2.add_record(time_i).value = 
 #        p3.add_record(time_j).value =
 
-        for z in range(len(store_set)-1):
+        for z in range(len(store_set)):
             store_z = store_set[z]
                       
-            p0.add_record([tech_i, time_j, store_z]).value = Carbon_matrix[z][j][i]
-            
-            p1.add_record(tech_i, time_j, store_z).value = 
-            p5.add_record(tech_i, time_j, store_z).value = 
+            p0.add_record([tech_i, time_j, store_z]).value = Carbon_matrix[z][j][i]         
+            p1.add_record([tech_i, time_j, store_z]).value = OPEX_matrix[z][j][i] 
+            p5.add_record([tech_i, time_j, store_z]).value = 
 
 
 
