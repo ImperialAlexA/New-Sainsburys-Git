@@ -13,7 +13,7 @@ import calendar
 import os
 import Common.classStore as st # Module is in seperate folder, hence the elaboration
 import Common.classTech as tc
-import Connection.classClusterConnection as cc
+#import Connection.classClusterConnection as cc
 from gams import GamsWorkspace
 
 
@@ -23,7 +23,7 @@ from gams import GamsWorkspace
 ############################################
 
 ## define problem granularity ###
-time_window = 2
+time_window = 20
 stores = 2
 domain_decomposition = 1
 year_start = 2020
@@ -43,6 +43,7 @@ mod = np.power(1+ ele_price_increase, np.linspace(year_start,year_stop, time_win
 K_ele = mod
 K_co2 = mod
 
+
 # retrieve capex and calculate coeff
 K_capex_tech1 = [2, 4] 
 K_capex_tech2 = [1, 8] 
@@ -57,6 +58,10 @@ K_capex_tech2 = [1, 8]
 ############################################
 ### generate GAMS gdx file ###    
 ############################################
+GAMS_model = "Strategic.gms"
+ws = GamsWorkspace()
+db =ws.add_database()
+i = db.add_set("i",1,"")
 
 
 

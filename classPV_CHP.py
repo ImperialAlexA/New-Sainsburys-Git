@@ -126,10 +126,10 @@ class PV_CHP:
         #a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
         popt1, pcov1 = curve_fit(func1, ind_variable, dep_variable1)
             
-        def func2(x, a, b, c,d,e,f): 
-            return a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
+        def func2(x, a, b, c): 
+            return a*x[0] + b*x[1] + c 
         # a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-        #a*x[0] + b*x[1] + c
+        #a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
         
         popt2, pcov2 = curve_fit(func2, ind_variable, dep_variable2)
         
