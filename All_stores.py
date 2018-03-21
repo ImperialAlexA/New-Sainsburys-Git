@@ -54,10 +54,15 @@ time_window = 2
 stores = 2
 year_start = 2020
 year_stop = 2050
+<<<<<<< HEAD
 tech_range = ['PV', 'CHP','dummy','ppa']
 modular = [1,0,1]
 ppa_co2_coef = 0 #CO2 savings=ppa_co2_coef*ppa_size
 ppa_opex_coef = 0 #opex savings=ppa_opex_coef*ppa_size
+=======
+tech_range = ['PV', 'CHP','dummy']
+modular = [1,0,1]
+>>>>>>> 4a7d62ba44caa1ca40fdc6aeff637d1e7caba2a1
 
 ele_price_increase = 0.06  # % electricity price increase each year
 gas_price_increase = 0.03 # 3% increase p.a.
@@ -77,8 +82,11 @@ PV_mod = np.power(1+capex_reduction_PV, np.linspace(year_start,year_stop, time_w
 matrix = []
 CAPEX = []
 
+<<<<<<< HEAD
 store_id = 2003
 solution = PC.PV_CHP(store_id).function_approx()
+=======
+>>>>>>> 4a7d62ba44caa1ca40fdc6aeff637d1e7caba2a1
 
 Carbon_matrix =[]
 OPEX_matrix = []
@@ -93,8 +101,13 @@ for store_id in Store_id_range[:stores]:
         CARBON_p2 = solution[3]
         CAPEX_p =  solution[0]
         
+<<<<<<< HEAD
         Carbonh.append([CARBON_p1,ppa_co2_coef])
         OPEXh.append([OPEX_p, ppa_opex_coef])
+=======
+        Carbonh.append(CARBON_p1)
+        OPEXh.append(OPEX_p)
+>>>>>>> 4a7d62ba44caa1ca40fdc6aeff637d1e7caba2a1
         
     Carbon_matrix.append(Carbonh)
     OPEX_matrix.append(OPEXh)

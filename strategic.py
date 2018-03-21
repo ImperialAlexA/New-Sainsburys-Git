@@ -14,7 +14,11 @@ import os
 import Common.classStore as st # Module is in seperate folder, hence the elaboration
 import Common.classTech as tc
 #import Connection.classClusterConnection as cc
+<<<<<<< HEAD
 #from gams import GamsWorkspace
+=======
+from gams import GamsWorkspace
+>>>>>>> 4a7d62ba44caa1ca40fdc6aeff637d1e7caba2a1
 
 
 
@@ -23,7 +27,11 @@ import Common.classTech as tc
 ############################################
 
 ## define problem granularity ###
+<<<<<<< HEAD
 time_window = 30
+=======
+time_window = 20
+>>>>>>> 4a7d62ba44caa1ca40fdc6aeff637d1e7caba2a1
 stores = 2
 domain_decomposition = 1
 year_start = 2020
@@ -43,6 +51,7 @@ mod = np.power(1+ ele_price_increase, np.linspace(year_start,year_stop, time_win
 K_ele = mod
 K_co2 = mod
 
+
 # retrieve capex and calculate coeff
 K_capex_tech1 = [2, 4] 
 K_capex_tech2 = [1, 8] 
@@ -57,6 +66,7 @@ K_capex_tech2 = [1, 8]
 ############################################
 ### generate GAMS gdx file ###    
 ############################################
+<<<<<<< HEAD
 ws = GamsWorkspace(GAMS_path)
 db = ws.add_database()                        
          
@@ -161,6 +171,13 @@ db = ws.add_database()
                 self.putUtility(time_start =old_time_start, time_stop = old_time_stop, table_string=old_price_table)         
 
         return(BAU_op_cost_HH_pound, op_cost_HH_pound, part_load, CHPQI)
+=======
+GAMS_model = "Strategic.gms"
+ws = GamsWorkspace()
+db =ws.add_database()
+i = db.add_set("i",1,"")
+
+>>>>>>> 4a7d62ba44caa1ca40fdc6aeff637d1e7caba2a1
 
 
 

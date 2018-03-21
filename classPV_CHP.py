@@ -131,10 +131,44 @@ class PV_CHP:
                 Capex_array.append(CHP_tech_price+PV_capex)
                 OPEX_array.append(CHP_opex+PV_opex)
                 Carbon_array.append(PV_Carbon+CHP_Carbon)
+<<<<<<< HEAD
                 
                 #arrays for 2D capex plots
                 CHP_capex_array.append(CHP_tech_price)
                 CHP_size_array.extend(CHP_tech_size)
+=======
+
+        
+        ind_variable = [PV_array,CHP_array]
+        dep_variable1 = Capex_array
+        dep_variable2 = OPEX_array
+        dep_variable3 = Carbon_array
+        ind_variable = np.array(ind_variable, dtype=np.float64)
+        dep_variable1 = np.array(dep_variable1, dtype=np.float64)
+        dep_variable2 = np.array(dep_variable2, dtype=np.float64)
+        dep_variable3 = np.array(dep_variable3, dtype=np.float64)
+        
+        def func1(x, a, b, c): 
+            return a*x[0] + b*x[1] + c
+        #a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+        popt1, pcov1 = curve_fit(func1, ind_variable, dep_variable1)
+            
+        def func2(x, a, b, c): 
+            return a*x[0] + b*x[1] + c 
+        # a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+        #a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
+        
+        popt2, pcov2 = curve_fit(func2, ind_variable, dep_variable2)
+        
+        def func3(x, a, b, c): 
+            return a*x[0] + b*x[1] + c
+        # a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+        #a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
+        
+        k=int(len(ind_variable[0])/2)
+        popt3, pcov3 = curve_fit(func3, ind_variable[:,:k], dep_variable3[:k])
+        popt4, pcov4 = curve_fit(func3, ind_variable[:,k:], dep_variable3[k:])
+>>>>>>> 4a7d62ba44caa1ca40fdc6aeff637d1e7caba2a1
         
 
         self.ind_variable = np.array([PV_array,CHP_array], dtype=np.float64)
