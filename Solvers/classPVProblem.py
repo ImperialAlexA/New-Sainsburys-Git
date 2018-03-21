@@ -35,14 +35,14 @@ class PVproblem:
         self.time_stop= int((default_final_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
         self.store.getSimplePrice(self.time_start, self.time_stop, self.price_table)
         self.store.getSimpleDemand(self.time_start, self.time_stop)
-        #put self. back 
+        self.store.getWeatherData(self.time_start, self.time_stop)
         
         self.discount_rate = 0.09
         self.roof_max_weight = 16 #(kg/m2)
         self.roof_area= 400 #m2
         self.hidden_cost=2000 #£
         self.Roof_space_coeff=0.6 
-        self.roof_available_area= self.roof_area*self.Roof_space_coeff #m2
+        self.roof_available_area= self.store.area*self.Roof_space_coeff #m2
         self.cf_ele=0.370845 #kgCO2/kWh
         self.cf_gas = 0.1840 #kgCO2/kWh
         
@@ -72,7 +72,7 @@ class PVproblem:
         opti_savings=0
         tech_range = range(1,4) 
         df = pandas.read_excel('Irradiance-data.xlsx')
-        irradiance = df['161_data'].values
+        irradiance = self.store.irr
         
         for tech_id in tech_range:
             # initialize

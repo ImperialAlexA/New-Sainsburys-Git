@@ -19,6 +19,8 @@ import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
 
 
+
+
 class PV_CHP:
     
     def __init__(self,id_store,p_elec_mod= None,p_gas_mod = None, PV_price_mod = None, CHP_price_mod = None):
@@ -45,7 +47,19 @@ class PV_CHP:
 #            self.CHP_price
         self.PV_tech_id = 1
         self.id_store = id_store
-        
+    
+    def func_linear_2d(self,x, a, b):
+        return a*x+b
+    
+    def func_linear_3d(self,x, a, b, c):
+        return a*x[0] + b*x[1] + c
+    
+    def func_poly(self, x, a, b, c, d, e, f):
+        return a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3  
+    
+    def func_exp(self, x, a, b, c, d):
+        return a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+    
     def function_approx(self):
         database_path = "Sainsburys.sqlite"
         conn = sqlite3.connect(database_path)
@@ -64,12 +78,18 @@ class PV_CHP:
         max_panels = pb.PVproblem(self.id_store).Max_panel_number(self.PV_tech_id)
         panel_range = np.linspace(0,max_panels,5)
         
+        PV_capex_array = []
+        PV_size_array = []
         for n_panels in panel_range:
             cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (self.PV_tech_id,))
             dummy = cur.fetchall()
             PV_tech_price = dummy[0][2]*self.PV_price_mod
             PV_capex = PV_tech_price*n_panels
             PV_pb = pb.PVproblem(self.id_store)
+            
+            #arrays for 2D capex plots
+            PV_capex_array.append(PV_capex)
+            PV_size_array.append(n_panels)
             
             #elec and gas price modifiers
             init_p_ele = PV_pb.store.p_ele
@@ -84,7 +104,9 @@ class PV_CHP:
             PV_prod = PV_solution[6]
             
             old_d_ele = PV_pb.store.d_ele # store demand without panels
-        
+            
+            CHP_capex_array =[]
+            CHP_size_array =[]
             for tech_id in range(1,20):
                 cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
                 dummy = cur.fetchall()
@@ -110,45 +132,44 @@ class PV_CHP:
                 Capex_array.append(CHP_tech_price+PV_capex)
                 OPEX_array.append(CHP_opex+PV_opex)
                 Carbon_array.append(PV_Carbon+CHP_Carbon)
+                
+                #arrays for 2D capex plots
+                CHP_capex_array.append(CHP_tech_price)
+                CHP_size_array.extend(CHP_tech_size)
+        
 
+        self.ind_variable = np.array([PV_array,CHP_array], dtype=np.float64)
+        self.dep_variable1 = np.array(Capex_array, dtype=np.float64)
+        self.dep_variable2 = np.array(OPEX_array, dtype=np.float64)
+        self.dep_variable3 = np.array(Carbon_array, dtype=np.float64)
+        self.dep_variable4 = np.array(PV_capex_array, dtype=np.float64)
+        self.dep_variable5 = np.array(CHP_capex_array, dtype=np.float64)   
         
-        ind_variable = [PV_array,CHP_array]
-        dep_variable1 = Capex_array
-        dep_variable2 = OPEX_array
-        dep_variable3 = Carbon_array
-        ind_variable = np.array(ind_variable, dtype=np.float64)
-        dep_variable1 = np.array(dep_variable1, dtype=np.float64)
-        dep_variable2 = np.array(dep_variable2, dtype=np.float64)
-        dep_variable3 = np.array(dep_variable3, dtype=np.float64)
+        #============CALCULATE CURVE COEFFICIENTS==============================
+        #capex PV+CHP
+        popt1, pcov1 = curve_fit(self.func_linear_3d, self.ind_variable, self.dep_variable1) 
+        #OPEX
+        popt2, pcov2 = curve_fit(self.func_poly, self.ind_variable, self.dep_variable2) 
+        #Carbon
+        popt3, pcov3 = curve_fit(self.func_poly, self.ind_variable, self.dep_variable3)
+        #Capex PV
+        self.ind_variable4 = np.array(PV_size_array, dtype=np.float64)
+        popt4, pcov4 = curve_fit(self.func_linear_2d, self.ind_variable4, self.dep_variable4)
+        #Capex CHP
+        self.ind_variable5 = np.array(CHP_size_array, dtype=np.float64)
+        popt5, pcov5 = curve_fit(self.func_linear_2d, self.ind_variable5, self.dep_variable5)
+
+        return(popt1,popt2,popt3,popt4,popt5)
         
-        def func1(x, a, b, c): 
-            return a*x[0] + b*x[1] + c
-        #a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-        popt1, pcov1 = curve_fit(func1, ind_variable, dep_variable1)
-            
-        def func2(x, a, b, c): 
-            return a*x[0] + b*x[1] + c 
-        # a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-        #a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
-        
-        popt2, pcov2 = curve_fit(func2, ind_variable, dep_variable2)
-        
-        def func3(x, a, b, c): 
-            return a*x[0] + b*x[1] + c
-        # a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-        #a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
-        
-        k=int(len(ind_variable[0])/2)
-        popt3, pcov3 = curve_fit(func3, ind_variable[:,:k], dep_variable3[:k])
-        popt4, pcov4 = curve_fit(func3, ind_variable[:,k:], dep_variable3[k:])
-        
-        #Calculate and print prediction error indicators
-        
+    def error(self): #Calculate and print prediction error indicators
+    
+        coef = self.function_approx()
         # =============================================================================
         # CAPEX
         # =============================================================================
-        Target_test = dep_variable1
-        Target_pred = func1(ind_variable, *popt1)
+
+        Target_test = self.dep_variable1
+        Target_pred = self.func_linear_3d(self.ind_variable, *coef[0])
         Relative_error=[]
         Bias = []
         for i in range(0, len(Target_pred)):
@@ -159,8 +180,8 @@ class PV_CHP:
         # =============================================================================
         # OPEX
         # =============================================================================
-        Target_test = dep_variable2
-        Target_pred = func2(ind_variable, *popt2)
+        Target_test = self.dep_variable2
+        Target_pred = self.func_poly(self.ind_variable, *coef[1])
         Relative_error=[]
         Bias = []
         for i in range(0, len(Target_pred)):
@@ -173,8 +194,8 @@ class PV_CHP:
         # CARBON
         # =============================================================================
         
-        Target_test = dep_variable3
-        Target_pred = np.hstack((func3(ind_variable[:,:k], *popt3),func3(ind_variable[:,k:],*popt4)))
+        Target_test = self.dep_variable3
+        Target_pred = self.func_poly(self.ind_variable, *coef[2])
         Relative_error=[]
         Bias = []
         for i in range(0, len(Target_pred)):
@@ -182,4 +203,33 @@ class PV_CHP:
             Bias.append(((abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
         
         CARBON_fit= [mean_absolute_error(Target_test, Target_pred),np.average(Relative_error),np.average(Bias),r2_score(Target_test, Target_pred)]
-        return(popt1,popt2,popt3,popt4,CAPEX_fit,OPEX_fit,CARBON_fit)
+        
+        # =============================================================================
+        # PV CAPEX
+        # =============================================================================
+
+        Target_test = self.dep_variable4
+        Target_pred = self.func_linear_2d(self.ind_variable4, *coef[3])
+        Relative_error=[]
+        Bias = []
+        for i in range(0, len(Target_pred)):
+            Relative_error.append((abs(abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
+            Bias.append(((abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
+        
+        PV_capex_fit= [mean_absolute_error(Target_test, Target_pred),np.average(Relative_error),np.average(Bias),r2_score(Target_test, Target_pred)]
+        
+        # =============================================================================
+        # CHP CAPEX
+        # =============================================================================
+        
+        Target_test = self.dep_variable5
+        Target_pred = self.func_linear_2d(self.ind_variable5, *coef[4])
+        Relative_error=[]
+        Bias = []
+        for i in range(0, len(Target_pred)):
+            Relative_error.append((abs(abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
+            Bias.append(((abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
+        
+        CHP_capex_fit= [mean_absolute_error(Target_test, Target_pred),np.average(Relative_error),np.average(Bias),r2_score(Target_test, Target_pred)]
+
+        return(CAPEX_fit,OPEX_fit,CARBON_fit,PV_capex_fit, CHP_capex_fit)

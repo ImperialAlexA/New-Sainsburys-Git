@@ -53,15 +53,15 @@ class store:
             self.name = dummy[0][1]  
         except ValueError: 
             print("Cannot retrieve store data")            
-#        try:    
-#            cur.execute("SELECT PostCode, Lat, Lon, Area FROM Stores WHERE id = ?", (store_id,))
-#            dummy = cur.fetchall()
-#            self.postcode = dummy[0][0]
-#            self.lat = dummy[0][1]
-#            self.lon = dummy[0][2]
-#            self.area = dummy[0][3]
-#        except ValueError: 
-#            pass  
+        try:    
+            cur.execute("SELECT PostCode, Lat, Lon, Area FROM Stores WHERE id = ?", (store_id,))
+            dummy = cur.fetchall()
+            self.postcode = dummy[0][0]
+            self.lat = dummy[0][1]
+            self.lon = dummy[0][2]
+            self.area = dummy[0][3]
+        except ValueError: 
+            pass  
         try:    
             cur.execute("SELECT HH_WD_open,  HH_WD_close,    HH_Sat_open,    HH_Sat_close,    HH_Sun_open,   HH_Sun_close FROM Stores WHERE id = ?", (store_id,))
             dummy = cur.fetchall()
@@ -154,7 +154,7 @@ class store:
             conn.commit() 
           ##get carbon factor (utilising 2016)
         self.crc = 16.1 #£/tCo2
-        self.cf_ele = 0.370845 #kgCO2/kWh
+        self.cf_ele = 0.412 #kgCO2/kWh
         self.cf_gas = 0.184 #kgCO2/kWh
         self.cf_diesel = 0.244 #kgCO2/kWh    
             
@@ -217,6 +217,33 @@ class store:
                 Time_vec, Temp = interpolate(Times, TempData, time_start, time_stop)
                 self.temp = Temp         
                 self.timestamp = Time_vec
+        ##put irradiance using 2015-2016 data (irr doesnt vary much and I was lazy)
+        found = 0
+        i = 0    
+        time_start_irr= 788928 #1/1/2015
+        time_stop_irr= 806446  #1/1/2016         
+        while found == 0:
+            MIDAStry = self.MIDASall[i]
+            i = i+1
+            cur.execute('''SELECT Time_id, irr FROM Weather WHERE Station_id = ? AND Time_id > ? AND Time_id < ?''', (MIDAStry, time_start_irr-1, time_stop_irr ))        
+            Raw_data = cur.fetchall()
+            Times = np.array([elt[0] for elt in Raw_data])
+            irr_data2 = np.array([elt[1] for elt in Raw_data])
+            if len([i for i in irr_data2 if i != None]) < 0.40*(time_stop_irr - time_start_irr):  # not enough values, reiterate
+                 pass
+            else:
+                found = 1
+                #remove empty string value. not clean, should be changed somehow.
+                try:  ## check if empty string are present adn process
+                    irr_data2[irr_data2 == ' '] = 'NaN'
+                    irr_data2.astype(np.float)
+                except:
+                    pass
+                Time_vec, irr = interpolate(Times, irr_data2, time_start_irr, time_stop_irr)
+                dummy = np.append(irr, irr)
+                self.irr = dummy[:len(self.timestamp)]         
+ 
+        
         
         
     def putMIDASstation(self):  

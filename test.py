@@ -36,7 +36,7 @@ OPEX_array = []
 Carbon_array = []
 
 max_panels = pb.PVproblem(id_store).Max_panel_number(PV_tech_id)
-panel_range = np.linspace(0,max_panels,5)
+panel_range = np.linspace(0,max_panels,10)
 
 for n_panels in panel_range:
     cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (PV_tech_id,))
@@ -217,6 +217,29 @@ print('Variance score: %.2f' % r2_score(Target_test, Target_pred))
 
 end= datetime.datetime.now()
 print('time:%s'%(end-start))
+
+
+
+
+import decompose_fun_2 as decfun
+
+spl = 2
+X_input = np.transpose(ind_variable)
+Y_input = dep_variable2
+
+
+dim = 2
+spl = 2
+n_iter = 15  
+n = 95
+X_input = np.random.rand(n,dim)
+X_input = np.transpose(ind_variable)
+Y_input = dep_variable2
+
+
+[p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(X_input,Y_input,spl)
+plt.plot(res_best_history)
+print(p_best)
 
 
 

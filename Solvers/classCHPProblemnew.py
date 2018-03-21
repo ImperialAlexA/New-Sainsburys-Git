@@ -228,7 +228,7 @@ class CHPproblem:
         [tech_data, utility_data] = self.calculate_data(mod = mod, uncertainty = uncertainty)
         [Boiler_eff, a_fuel, b_fuel, a_el, b_el, a_th,  b_th, psi_min, parasitic_load, mant_costs]  = tech_data  
         [el_price, el_price_exp, gas_price, th_demand, el_demand, gas_price_CHP] = utility_data
-        
+
         ## calculate optimum part load    
         psi_el = (el_demand - b_el)/a_el
         psi_th = (th_demand - b_th)/a_th  
