@@ -69,9 +69,27 @@ for n_panels in panel_range:
         Capex_array.append(CHP_tech_price+PV_capex)
         OPEX_array.append(CHP_opex+PV_opex)
         Carbon_array.append(PV_Carbon+CHP_Carbon)
+        
+        
+RPVCAPEX=[]
+RCHPCAPEX=[]
+RCHP_array=[]
 
-
-
+for n_panels in panel_range:
+    cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (PV_tech_id,))
+    Rdummy = cur.fetchall()
+    RPV_tech_price = Rdummy[0][2]
+    RPV_capex = RPV_tech_price*n_panels
+    RPVCAPEX.append(RPV_capex)
+           
+for tech_id in range(1,20):
+    cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
+    Rdummy = cur.fetchall()
+    RCHP_tech_size =(list(map(int, re.findall('\d+', Rdummy[0][1]))))
+    RCHP_tech_price = (Rdummy[0][2])
+    RCHP_array.extend(RCHP_tech_size)
+    RCHPCAPEX.append(RCHP_tech_price)   
+    
 ind_variable = [PV_array,CHP_array]
 dep_variable1 = Capex_array
 dep_variable2 = OPEX_array
@@ -80,86 +98,117 @@ ind_variable = np.array(ind_variable, dtype=np.float64)
 dep_variable1 = np.array(dep_variable1, dtype=np.float64)
 dep_variable2 = np.array(dep_variable2, dtype=np.float64)
 dep_variable3 = np.array(dep_variable3, dtype=np.float64)
+ind_variable4 = [panel_range]
+dep_variable4 = np.array(RPVCAPEX, dtype=np.float64)
+ind_variable5 = [RCHP_array]
+dep_variable5 = np.array(RCHPCAPEX, dtype=np.float64)
+#def func1(x, a, b, c): 
+#    return a*x[0] + b*x[1] + c
+##a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+#popt1, pcov1 = curve_fit(func1, ind_variable, dep_variable1)
+#
+#fig = plt.figure(1)
+#ax = Axes3D(fig)
+#ax.scatter(ind_variable[0], ind_variable[1], dep_variable1, zdir='z', s=20, c='r', depthshade=True)
+#x1 = np.linspace(min(ind_variable[0]), max(ind_variable[0]),len(ind_variable[0]))
+#x2 = np.linspace(min(ind_variable[1]), max(ind_variable[1]),len(ind_variable[1]))
+#x = [x1,x2]
+#X1, X2 = np.meshgrid(x1, x2)
+#zs = np.array([func1([x1, x2],*popt1) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
+#Z = zs.reshape(X1.shape)
+#ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
+#ax.set_xlabel('PV', labelpad=8)
+#ax.set_ylabel('CHP', labelpad=8)
+#ax.set_zlabel('Capex',labelpad=8)
+#ax.tick_params(axis='both', which='major', pad=3)
+#plt.show()
+#    
+#def func2(x, a, b, c,d,e,f): 
+#    return a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
+## a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+##a*x[0] + b*x[1] + c
+#init_guess = [1,1,1,1,1,1]
+#popt2, pcov2 = curve_fit(func2, ind_variable, dep_variable2, init_guess)
+#
+#fig = plt.figure(2)
+#ax = Axes3D(fig)
+#ax.scatter(ind_variable[0], ind_variable[1], dep_variable2, zdir='z', s=20, c='r', depthshade=True)
+#x1 = np.linspace(min(ind_variable[0]), max(ind_variable[0]),len(ind_variable[0]))
+#x2 = np.linspace(min(ind_variable[1]), max(ind_variable[1]),len(ind_variable[1]))
+#x = [x1,x2]
+#X1, X2 = np.meshgrid(x1, x2)
+#zs = np.array([func2([x1, x2],*popt2) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
+#Z = zs.reshape(X1.shape)
+#ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
+#ax.set_xlabel('PV', labelpad=8)
+#ax.set_ylabel('CHP', labelpad=8)
+#ax.set_zlabel('OPEX',labelpad=8)
+#ax.tick_params(axis='both', which='major', pad=3)
+#plt.show()
+#
+#def func3(x, a, b, c): 
+#    return a*x[0] + b*x[1] + c
+## a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+##a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
+#
+#k=np.argmax(dep_variable3)
+#popt3, pcov3 = curve_fit(func3, ind_variable[:,:k], dep_variable3[:k])
+#popt4, pcov4 = curve_fit(func3, ind_variable[:,k:], dep_variable3[k:])
+#
+#fig = plt.figure(3)
+#ax = Axes3D(fig)
+#ax.scatter(ind_variable[0], ind_variable[1], dep_variable3, zdir='z', s=20, c='r', depthshade=True)
+#
+#x1 = np.linspace(min(ind_variable[0,:k]), max(ind_variable[0,:k]),len(ind_variable[0,:k]))
+#x2 = np.linspace(min(ind_variable[1,:k]), max(ind_variable[1,:k]),len(ind_variable[1,:k]))
+#x = [x1,x2]
+#X1, X2 = np.meshgrid(x1, x2)
+#zs = np.array([func3([x1, x2],*popt3) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
+#Z = zs.reshape(X1.shape)
+#ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
+#
+#x01 = np.linspace(min(ind_variable[0,k:]), max(ind_variable[0,k:]),len(ind_variable[0,k:]))
+#x02 = np.linspace(min(ind_variable[1,k:]), max(ind_variable[1,k:]),len(ind_variable[1,k:]))
+#x0 = [x01,x02]
+#X01, X02 = np.meshgrid(x01, x02)
+#zs0 = np.array([func3([x01, x02],*popt4) for x01,x02 in zip(np.ravel(X01), np.ravel(X02))])
+#Z0 = zs0.reshape(X01.shape)
+#ax.plot_wireframe(X01, X02, Z0, rstride=10, cstride=10)
+#
+#ax.set_xlabel('PV', labelpad=8)
+#ax.set_ylabel('CHP', labelpad=8)
+#ax.set_zlabel('Carbon',labelpad=8)
+#ax.tick_params(axis='both', which='major', pad=3)
+#plt.show()
 
-def func1(x, a, b, c): 
-    return a*x[0] + b*x[1] + c
-#a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-popt1, pcov1 = curve_fit(func1, ind_variable, dep_variable1)
 
-fig = plt.figure(1)
-ax = Axes3D(fig)
-ax.scatter(ind_variable[0], ind_variable[1], dep_variable1, zdir='z', s=20, c='r', depthshade=True)
-x1 = np.linspace(min(ind_variable[0]), max(ind_variable[0]),len(ind_variable[0]))
-x2 = np.linspace(min(ind_variable[1]), max(ind_variable[1]),len(ind_variable[1]))
-x = [x1,x2]
-X1, X2 = np.meshgrid(x1, x2)
-zs = np.array([func1([x1, x2],*popt1) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
-Z = zs.reshape(X1.shape)
-ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
-ax.set_xlabel('PV', labelpad=8)
-ax.set_ylabel('CHP', labelpad=8)
-ax.set_zlabel('Capex',labelpad=8)
-ax.tick_params(axis='both', which='major', pad=3)
+def func4(x, a, b): 
+    return a*x+b
+    #   a*np.exp(-b*x)+c
+popt4, pcov4 = curve_fit(func4, ind_variable4[0], dep_variable4)
+X = np.linspace(min(ind_variable4[0]), max(ind_variable4[0]),len(ind_variable4[0]))
+Y = func4(X, *popt4)
+plt.figure(4)
+plt.plot(X, Y, 'b-', label='fit' )
+plt.plot(ind_variable4[0], dep_variable4, 'ro', label='data')
+plt.xlabel(ind_var_name3[0])
+plt.ylabel(dep_var_name3)
+plt.legend()
 plt.show()
-    
-def func2(x, a, b, c,d,e,f): 
-    return a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
-# a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-#a*x[0] + b*x[1] + c
-init_guess = [1,1,1,1,1,1]
-popt2, pcov2 = curve_fit(func2, ind_variable, dep_variable2, init_guess)
 
-fig = plt.figure(2)
-ax = Axes3D(fig)
-ax.scatter(ind_variable[0], ind_variable[1], dep_variable2, zdir='z', s=20, c='r', depthshade=True)
-x1 = np.linspace(min(ind_variable[0]), max(ind_variable[0]),len(ind_variable[0]))
-x2 = np.linspace(min(ind_variable[1]), max(ind_variable[1]),len(ind_variable[1]))
-x = [x1,x2]
-X1, X2 = np.meshgrid(x1, x2)
-zs = np.array([func2([x1, x2],*popt2) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
-Z = zs.reshape(X1.shape)
-ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
-ax.set_xlabel('PV', labelpad=8)
-ax.set_ylabel('CHP', labelpad=8)
-ax.set_zlabel('OPEX',labelpad=8)
-ax.tick_params(axis='both', which='major', pad=3)
+def func5(x, a, b): 
+    return a*x+b
+    #   a*np.exp(-b*x)+c
+popt5, pcov5 = curve_fit(func5, ind_variable5[0], dep_variable5)
+X = np.linspace(min(ind_variable5[0]), max(ind_variable5[0]),len(ind_variable5[0]))
+Y = func5(X, *popt5)
+plt.figure(5)
+plt.plot(X, Y, 'b-', label='fit' )
+plt.plot(ind_variable5[0], dep_variable5, 'ro', label='data')
+plt.xlabel(ind_var_name3[0])
+plt.ylabel(dep_var_name3)
+plt.legend()
 plt.show()
-
-def func3(x, a, b, c): 
-    return a*x[0] + b*x[1] + c
-# a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
-#a*x[0]+b*x[0]**2+e*x[0]**3+c*x[1]+d*x[1]**2+f*x[1]**3
-
-k=np.argmax(dep_variable3)
-popt3, pcov3 = curve_fit(func3, ind_variable[:,:k], dep_variable3[:k])
-popt4, pcov4 = curve_fit(func3, ind_variable[:,k:], dep_variable3[k:])
-
-fig = plt.figure(3)
-ax = Axes3D(fig)
-ax.scatter(ind_variable[0], ind_variable[1], dep_variable3, zdir='z', s=20, c='r', depthshade=True)
-
-x1 = np.linspace(min(ind_variable[0,:k]), max(ind_variable[0,:k]),len(ind_variable[0,:k]))
-x2 = np.linspace(min(ind_variable[1,:k]), max(ind_variable[1,:k]),len(ind_variable[1,:k]))
-x = [x1,x2]
-X1, X2 = np.meshgrid(x1, x2)
-zs = np.array([func3([x1, x2],*popt3) for x1,x2 in zip(np.ravel(X1), np.ravel(X2))])
-Z = zs.reshape(X1.shape)
-ax.plot_wireframe(X1, X2, Z, rstride=10, cstride=10)
-
-x01 = np.linspace(min(ind_variable[0,k:]), max(ind_variable[0,k:]),len(ind_variable[0,k:]))
-x02 = np.linspace(min(ind_variable[1,k:]), max(ind_variable[1,k:]),len(ind_variable[1,k:]))
-x0 = [x01,x02]
-X01, X02 = np.meshgrid(x01, x02)
-zs0 = np.array([func3([x01, x02],*popt4) for x01,x02 in zip(np.ravel(X01), np.ravel(X02))])
-Z0 = zs0.reshape(X01.shape)
-ax.plot_wireframe(X01, X02, Z0, rstride=10, cstride=10)
-
-ax.set_xlabel('PV', labelpad=8)
-ax.set_ylabel('CHP', labelpad=8)
-ax.set_zlabel('Carbon',labelpad=8)
-ax.tick_params(axis='both', which='major', pad=3)
-plt.show()
-
 #Calculate and print prediction error indicators
 
 # =============================================================================

@@ -18,7 +18,7 @@ class tech:
     def __init__(self, tech_id):
         self.tech_id = tech_id
         try:    
-            conn = sqlite3.connect(".\\Sainsburys.sqlite")
+            conn = sqlite3.connect("Sainsburys.sqlite")
             cur = conn.cursor()
         except ValueError:
             print("Cannot connect to database")
