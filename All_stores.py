@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+conda install -c anaconda paramiko# -*- coding: utf-8 -*-
 """
 Created on Sun Feb 25 16:44:28 2018
 
@@ -54,10 +54,12 @@ time_window = 2
 stores = 2
 year_start = 2020
 year_stop = 2050
+
 tech_range = ['PV', 'CHP','dummy','ppa']
 modular = [1,0,1]
 ppa_co2_coef = 0 #CO2 savings=ppa_co2_coef*ppa_size
 ppa_opex_coef = 0 #opex savings=ppa_opex_coef*ppa_size
+
 
 ele_price_increase = 0.06  # % electricity price increase each year
 gas_price_increase = 0.03 # 3% increase p.a.

@@ -20,7 +20,10 @@ from sklearn.metrics import mean_absolute_error, r2_score
 
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> f205df4e73b116fbc5e2a98f0d454812f30cf4a1
 class PV_CHP:
     
     def __init__(self,id_store,p_elec_mod= None,p_gas_mod = None, PV_price_mod = None, CHP_price_mod = None):
@@ -132,10 +135,11 @@ class PV_CHP:
                 Capex_array.append(CHP_tech_price+PV_capex)
                 OPEX_array.append(CHP_opex+PV_opex)
                 Carbon_array.append(PV_Carbon+CHP_Carbon)
-                
+      
                 #arrays for 2D capex plots
                 CHP_capex_array.append(CHP_tech_price)
                 CHP_size_array.extend(CHP_tech_size)
+
         
 
         self.ind_variable = np.array([PV_array,CHP_array], dtype=np.float64)
@@ -144,7 +148,7 @@ class PV_CHP:
         self.dep_variable3 = np.array(Carbon_array, dtype=np.float64)
         self.dep_variable4 = np.array(PV_capex_array, dtype=np.float64)
         self.dep_variable5 = np.array(CHP_capex_array, dtype=np.float64)   
-        
+
         #============CALCULATE CURVE COEFFICIENTS==============================
         #capex PV+CHP
         popt1, pcov1 = curve_fit(self.func_linear_3d, self.ind_variable, self.dep_variable1) 
@@ -160,7 +164,7 @@ class PV_CHP:
         popt5, pcov5 = curve_fit(self.func_linear_2d, self.ind_variable5, self.dep_variable5)
 
         return(popt1,popt2,popt3,popt4,popt5)
-        
+
     def error(self): #Calculate and print prediction error indicators
     
         coef = self.function_approx()

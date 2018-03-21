@@ -4,7 +4,7 @@ Created on Tue Nov  7 16:30:10 2017
 
 @author: nl211
 """
-import paramiko
+#import paramiko
 import sys
 import os
 import paramiko
