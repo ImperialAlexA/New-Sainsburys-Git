@@ -75,8 +75,8 @@ for store_id in Store_id_range[:stores]:
         
         Carbonh.append(np.vstack([CARBON_p,ppa_co2_coef]))
         OPEXh.append(np.vstack([OPEX_p, ppa_opex_coef]))
-        Capex_p0.append([CAPEX_PV_p[0],CAPEX_CHP_p[0],0,0]) # two last entries are for dummy and ppa
-        Capex_p1.append([CAPEX_PV_p[1],CAPEX_CHP_p[1],0,0])
+        Capex_p0.append([CAPEX_PV_p[1],CAPEX_CHP_p[1],0,0]) # two last entries are for dummy and ppa
+        Capex_p1.append([CAPEX_PV_p[0],CAPEX_CHP_p[0],0,0])
         
     Carbon_matrix.append(Carbonh)
     OPEX_matrix.append(OPEXh)
