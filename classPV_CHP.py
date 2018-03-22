@@ -17,13 +17,11 @@ import numpy as np
 from scipy.optimize import curve_fit
 import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
+import decompose_fun_2 as decfun
 
 
 
-<<<<<<< HEAD
 
-=======
->>>>>>> f205df4e73b116fbc5e2a98f0d454812f30cf4a1
 class PV_CHP:
     
     def __init__(self,id_store,p_elec_mod= None,p_gas_mod = None, PV_price_mod = None, CHP_price_mod = None):
@@ -63,7 +61,12 @@ class PV_CHP:
     def func_exp(self, x, a, b, c, d):
         return a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
     
-    def function_approx(self):
+    def function_approx(self,spl = None):
+        if spl is not None:# number of domains the data will be split in for the piecewise linear regression
+            spl = spl
+        else:
+            spl = 2
+        
         database_path = "Sainsburys.sqlite"
         conn = sqlite3.connect(database_path)
         cur = conn.cursor()
@@ -153,9 +156,15 @@ class PV_CHP:
         #capex PV+CHP
         popt1, pcov1 = curve_fit(self.func_linear_3d, self.ind_variable, self.dep_variable1) 
         #OPEX
-        popt2, pcov2 = curve_fit(self.func_poly, self.ind_variable, self.dep_variable2) 
+        [p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable2,spl)
+        popt2 = np.vstack([p_best,intercept_best])
+        opex_lb = lb_best
+        opex_ub =ub_best
         #Carbon
-        popt3, pcov3 = curve_fit(self.func_poly, self.ind_variable, self.dep_variable3)
+        [p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable3,spl)
+        popt3 = np.vstack([p_best,intercept_best])
+        carbon_lb = lb_best
+        carbon_ub =ub_best
         #Capex PV
         self.ind_variable4 = np.array(PV_size_array, dtype=np.float64)
         popt4, pcov4 = curve_fit(self.func_linear_2d, self.ind_variable4, self.dep_variable4)
@@ -163,7 +172,7 @@ class PV_CHP:
         self.ind_variable5 = np.array(CHP_size_array, dtype=np.float64)
         popt5, pcov5 = curve_fit(self.func_linear_2d, self.ind_variable5, self.dep_variable5)
 
-        return(popt1,popt2,popt3,popt4,popt5)
+        return(popt1,popt2,popt3,popt4,popt5,opex_lb,opex_ub,carbon_lb,carbon_ub)
 
     def error(self): #Calculate and print prediction error indicators
     

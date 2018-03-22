@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 def decompose(X_input,Y_input,spl):
-    n_iter = 15
+    n_iter = 100
     dim = X_input.shape[1]
     #conduct scaling 
     X = (X_input - X_input.min(axis=0))/(X_input.max(axis=0) - X_input.min(axis=0));
@@ -69,7 +69,7 @@ def decompose(X_input,Y_input,spl):
         except:    
               fault = fault + 1
               resTot = 10000
-              if fault > 5:
+              if fault >90:
                   print("something is worng with the problem")
                   raise 
         #store parameters if good          
@@ -129,6 +129,6 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = Axes3D(fig)
     ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
-    ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 1)
+    ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 5)
    
 

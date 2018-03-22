@@ -279,7 +279,7 @@ Y_input = dep_variable2
 
 dim = 2
 spl = 2
-n_iter = 15  
+n_iter = 60 
 n = 95
 X_input = np.random.rand(n,dim)
 X_input = np.transpose(ind_variable)
