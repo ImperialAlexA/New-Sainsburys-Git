@@ -124,7 +124,6 @@ for i in range(len(tech_set)):
         time_j = time_set[j] 
         p2.add_record([tech_i, time_j]).value = Capex_p0[j][i]
         p3.add_record([tech_i, time_j]).value = Capex_p1[j][i]
-        p4.add_record(time_j).value = CO2_target[j]
 
         for z in range(len(store_set)):
             store_z = store_set[z]
@@ -135,7 +134,11 @@ for i in range(len(tech_set)):
                 p0.add_record([tech_i, time_j, store_z, split_k]).value = Carbon_matrix[z][j][i][k]      
                 p1.add_record([tech_i, time_j, store_z, split_k]).value = OPEX_matrix[z][j][i][k]
 
-db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git" +"\\input.gdx")
+for j in range(len(time_set)):
+    time_j = time_set[j]   
+    p4.add_record(time_j).value = CO2_target[j]
+
+db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\input.gdx")
 
 
 

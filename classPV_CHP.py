@@ -113,7 +113,7 @@ class PV_CHP:
             
             CHP_capex_array =[]
             CHP_size_array =[]
-            for tech_id in range(1,20):
+            for tech_id in range(1,21):
                 cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
                 dummy = cur.fetchall()
                 CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
