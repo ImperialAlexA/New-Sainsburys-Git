@@ -176,6 +176,7 @@ class PV_CHP:
 
     def error(self): #Calculate and print prediction error indicators
     
+        #NEED TO CHANGE FOR OPEX AND CARBON 
         coef = self.function_approx()
         # =============================================================================
         # CAPEX
