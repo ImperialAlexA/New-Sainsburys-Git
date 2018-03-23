@@ -30,11 +30,11 @@ CHP_array = []
 Capex_array = []
 OPEX_array = []
 Carbon_array = []
-id_store =2003
+id_store =26
 PV_tech_id =1
 
 max_panels = pb.PVproblem(id_store).Max_panel_number(PV_tech_id)
-panel_range = np.linspace(0,max_panels,5)
+panel_range = np.linspace(0,max_panels,10)
 
 PV_capex_array = []
 PV_size_array = []
@@ -92,15 +92,10 @@ dep_variable5 = np.array(CHP_capex_array, dtype=np.float64)
 import decompose_fun_2 as decfun
 
 spl = 2
+
 X_input = np.transpose(ind_variable)
 Y_input = dep_variable2
 
-
-dim = 2
-spl = 2
-
-X_input = np.transpose(ind_variable)
-Y_input = dep_variable3
 
 
 [p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(X_input,Y_input,spl)
@@ -109,7 +104,7 @@ print(p_best)
 
 for i in range(p_best.shape[1]):
             lb_IO = X_input > lb_best[:,i]
-            ub_IO = X_input < ub_best[:,i]    
+            ub_IO = X_input < ub_best[:,i]     
             mask = np.logical_and(np.all(lb_IO, axis = 1), np.all(ub_IO, axis = 1))
             X0 = X_input[mask]
             print(X0.shape)
@@ -130,3 +125,20 @@ fig = plt.figure()
 ax = Axes3D(fig)
 ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
 ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 5)
+
+
+
+#import xlsxwriter
+#workbook = xlsxwriter.Workbook('test.xlsx')
+#worksheet = workbook.add_worksheet()
+#row = 0
+#col =0
+#for PV, CHP in np.transpose(ind_variable):
+#    worksheet.write(row,col, PV)
+#    worksheet.write(row,col+1, CHP)
+#    row +=1 
+#row=0
+#for carbon in np.transpose(dep_variable3):
+#    worksheet.write(row, col+3, carbon)
+#    row+=1
+#workbook.close()

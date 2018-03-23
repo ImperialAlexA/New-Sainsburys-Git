@@ -18,8 +18,7 @@ from scipy.optimize import curve_fit
 import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
 import decompose_fun_2 as decfun
-
-
+import Common.classStore as st
 
 
 class PV_CHP:
@@ -48,6 +47,19 @@ class PV_CHP:
 #            self.CHP_price
         self.PV_tech_id = 1
         self.id_store = id_store
+        
+        self.store = st.store(id_store)
+        self.price_table = 'Utility_Prices_Aitor'
+        default_initial_time = datetime.datetime(2016,1,1)
+        default_final_time = datetime.datetime(2017,1,1)
+        self.time_start= int((default_initial_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
+        self.time_stop= int((default_final_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
+        self.store.getSimplePrice(self.time_start, self.time_stop, self.price_table)
+        self.store.getSimpleDemand(self.time_start, self.time_stop)        
+        self.store.getWeatherData(self.time_start, self.time_stop)
+        self.init_p_ele = self.store.p_ele
+        self.init_p_gas = self.store.p_gas
+        self.init_d_ele = self.store.d_ele
     
     def func_linear_2d(self,x, a, b):
         return a*x+b
@@ -98,10 +110,10 @@ class PV_CHP:
             PV_size_array.append(n_panels)
             
             #elec and gas price modifiers
-            init_p_ele = PV_pb.store.p_ele
-            PV_pb.store.p_ele = self.p_elec_mod*init_p_ele
-            init_p_gas = PV_pb.store.p_gas
-            PV_pb.store.p_gas = self.p_gas_mod*init_p_gas
+            
+            PV_pb.store.p_ele = self.p_elec_mod*self.init_p_ele
+            
+            PV_pb.store.p_gas = self.p_gas_mod*self.init_p_gas
             
             #calculate solution, extract opex savings, carbon savings and electricity production
             PV_solution = PV_pb.SimulatePVonAllRoof(self.PV_tech_id,n_panels)
@@ -109,7 +121,6 @@ class PV_CHP:
             PV_Carbon = PV_solution[4]
             PV_prod = PV_solution[6]
             
-            old_d_ele = PV_pb.store.d_ele # store demand without panels
             
             CHP_capex_array =[]
             CHP_size_array =[]
@@ -121,13 +132,12 @@ class PV_CHP:
                 CHP_pb = BBC.CHPproblem(self.id_store)
                 
                 #elec and gas price modifiers
-                init_p_ele = CHP_pb.store.p_ele
-                CHP_pb.store.p_ele = self.p_elec_mod*init_p_ele
-                init_p_gas = CHP_pb.store.p_gas
-                CHP_pb.store.p_gas = self.p_gas_mod*init_p_gas
+
+                CHP_pb.store.p_ele = self.p_elec_mod*self.init_p_ele
+                CHP_pb.store.p_gas = self.p_gas_mod*self.init_p_gas
                 
                 #adjust the elec demand according to pv elec production 
-                CHP_pb.store.d_ele= abs(old_d_ele - PV_prod)
+                CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
                 
                 CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id,tech_id],mod = [11.9/8.787,2.35/2.618,1,1], ECA_value = 0.26, table_string = 'Utility_Prices_Aitor _NoGasCCL')
                 CHP_opex = CHP_solution[4][0]

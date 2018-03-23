@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 def decompose(X_input,Y_input,spl):
-    n_iter = 100
+    n_iter = 1000
     dim = X_input.shape[1]
     #conduct scaling 
     X = (X_input - X_input.min(axis=0))/(X_input.max(axis=0) - X_input.min(axis=0));
@@ -28,6 +28,7 @@ def decompose(X_input,Y_input,spl):
     res_best = 10000
     fault = 0
     for t in range(n_iter):
+
         try:            
             # generate randonmly the domain
             l = np.random.rand(dim,spl-1)
@@ -48,14 +49,18 @@ def decompose(X_input,Y_input,spl):
             lb = 0*np.ones((dim,d))
             ub = 0*np.ones((dim,d))    
             res = 0*np.ones((1,d))           
-            regr = linear_model.LinearRegression()
+            
             for i in range(d):
+                if i == 0:
+                    regr = linear_model.LinearRegression(fit_intercept=False)
+                else:
+                    regr = linear_model.LinearRegression(fit_intercept=True)
                 f1 = arr_pos[:,i].astype(int)
                 f2 = np.arange(lb0.shape[0]).astype(int)
                 lb[:,i] = lb0[f2,f1] 
                 ub[:,i] = ub0[f2,f1] 
-                lb_IO = X > lb[:,i]
-                ub_IO = X < ub[:,i]    
+                lb_IO = X >= lb[:,i]
+                ub_IO = X <= ub[:,i]    
                 mask = np.logical_and(np.all(lb_IO, axis = 1), np.all(ub_IO, axis = 1))
                 
                 X0 = X[mask]
@@ -63,13 +68,14 @@ def decompose(X_input,Y_input,spl):
                 regr.fit(X0, Y0)
                 p[:,i] = regr.coef_
                 intercept[0,i] = regr.intercept_
+                print(regr.intercept_)
                 Y_fit = regr.predict(X0)
                 res[0,i] = np.sum(np.power(Y0-Y_fit,2))
                 resTot = np.sum(res)
         except:    
               fault = fault + 1
               resTot = 10000
-              if fault >90:
+              if fault >900:
                   print("something is worng with the problem")
                   raise 
         #store parameters if good          

@@ -17,9 +17,10 @@ import numpy as np
 from scipy.optimize import curve_fit
 import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
-#import Connection.classClusterConnection as cc
+import Connection.classClusterConnection as cc
 from gams import GamsWorkspace
 
+start = datetime.datetime.now()
 database_path = "Sainsburys.sqlite"
 conn = sqlite3.connect(database_path)
 cur = conn.cursor()
@@ -27,7 +28,6 @@ cur = conn.cursor()
 cur.execute('''SELECT Stores_id FROM Demand_Check Where Ele= {vn1} and Gas= {vn2}'''.format(vn1=1,vn2=1))
 Index = cur.fetchall()
 Store_id_range = np.array([elt[0] for elt in Index],dtype=np.float64)
-
 
 
 
@@ -39,9 +39,21 @@ CO2_target = [2,4]
 
 tech_range = ['PV', 'CHP','dummy','ppa']
 modular = [1,0,1,1]
+split = 2 #SPlit the data for opex and carbon to generate coef of piecewise linear function
+
+#define the coefficients for ppa manually to allow for future addition of ppa to model (now all zeros)
 ppa_co2_coef = np.zeros(4) #CO2 savings=ppa_co2_coef*ppa_size
 ppa_opex_coef = np.zeros(4) #opex savings=ppa_opex_coef*ppa_size
-split = 2 #SPlit the data for opex and carbon to generate coef of piecewise linear function
+ppa_limit_bot_opex = np.zeros(4)
+ppa_limit_top_opex = np.ones(4)
+ppa_limit_bot_co2 = np.zeros(4)
+ppa_limit_top_co2 = np.ones(4)
+
+dummy_limit_bot_opex = np.zeros(4)
+dummy_limit_top_opex =2*np.ones(4)
+dummy_limit_bot_co2 = np.zeros(4)
+dummy_limit_top_co2 = 2*np.ones(4)
+
 
 ele_price_increase = 0.06  # % electricity price increase each year
 gas_price_increase = 0.03 # 3% increase p.a.
@@ -60,26 +72,52 @@ PV_mod = np.power(1+capex_reduction_PV, np.linspace(year_start,year_stop, time_w
 
 Carbon_matrix =[]
 OPEX_matrix = []
+x_limit_bot_opex_matrix = []
+x_limit_top_opex_matrix = []
+x_limit_bot_co2_matrix = []
+x_limit_top_co2_matrix = []
 for store_id in Store_id_range[:stores]:
+    print('store:%d' %store_id)
     Carbonh = []
     OPEXh = []
     Capex_p0 = []
     Capex_p1 = []
+    x_limit_bot_opex_h = []
+    x_limit_top_opex_h = []
+    x_limit_bot_co2_h = []
+    x_limit_top_co2_h = []
     for n in range(0,time_window):
+        print('Time window:%d' %n)
 
         solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n], p_gas_mod=p_gas_mod[n], PV_price_mod= PV_mod[n], CHP_price_mod=CHP_mod[n]).function_approx(spl=split)
         OPEX_p = solution[1]
         CARBON_p = solution[2]
         CAPEX_PV_p =  solution[3]
         CAPEX_CHP_p = solution[4]
+        x_limit_bot_opex = solution[5]
+        x_limit_top_opex = solution[6]
+        x_limit_bot_co2 = solution[7]
+        x_limit_top_co2 = solution[8]
         
         Carbonh.append(np.vstack([CARBON_p,ppa_co2_coef]))
         OPEXh.append(np.vstack([OPEX_p, ppa_opex_coef]))
         Capex_p0.append([CAPEX_PV_p[1],CAPEX_CHP_p[1],0,0]) # two last entries are for dummy and ppa
         Capex_p1.append([CAPEX_PV_p[0],CAPEX_CHP_p[0],0,0])
         
+        x_limit_bot_opex_h.append(np.vstack([x_limit_bot_opex,dummy_limit_bot_opex,ppa_limit_bot_opex]))
+        x_limit_top_opex_h.append(np.vstack([x_limit_top_opex,dummy_limit_top_opex,ppa_limit_top_opex]))
+        x_limit_bot_co2_h.append(np.vstack([x_limit_bot_co2,dummy_limit_bot_co2,ppa_limit_bot_co2]))
+        x_limit_top_co2_h.append(np.vstack([x_limit_top_co2,dummy_limit_top_co2,ppa_limit_top_co2]))
+        
+        
     Carbon_matrix.append(Carbonh)
     OPEX_matrix.append(OPEXh)
+    x_limit_bot_opex_matrix.append(x_limit_bot_opex_h)
+    x_limit_top_opex_matrix.append(x_limit_top_opex_h)
+    x_limit_bot_co2_matrix.append(x_limit_bot_co2_h)
+    x_limit_top_co2_matrix.append(x_limit_top_co2_h)
+    
+    
     
 ############################################
 ### generate GAMS gdx file ###    
@@ -113,12 +151,15 @@ p1 = db.add_parameter_dc("K_opex", [tech,t,s,d], "")
 p2 = db.add_parameter_dc("K0_capex", [tech,t], "")
 p3 = db.add_parameter_dc("K1_capex", [tech,t], "")
 p4 = db.add_parameter_dc("CO2_savingTarget", [t], "")
-#p5 = db.add_parameter_dc("Max_x", [tech,t,s], "")
-p6 = db.add_parameter_dc("IO_modular", [tech], "")
+p5 = db.add_parameter_dc("IO_modular", [tech], "")
+p6 = db.add_parameter_dc("x_limit_bot_opex", [tech,t,s,d], "")
+p7 = db.add_parameter_dc("x_limit_top_opex", [tech,t,s,d], "")
+p8 = db.add_parameter_dc("x_limit_bot_co2", [tech,t,s,d], "")
+p9 = db.add_parameter_dc("x_limit_top_co2", [tech,t,s,d], "")
        
 for i in range(len(tech_set)):
     tech_i = tech_set[i]
-    p6.add_record(tech_i).value = modular[i]
+    p5.add_record(tech_i).value = modular[i]
     
     for j in range(len(time_set)):
         time_j = time_set[j] 
@@ -133,12 +174,19 @@ for i in range(len(tech_set)):
                 
                 p0.add_record([tech_i, time_j, store_z, split_k]).value = Carbon_matrix[z][j][i][k]      
                 p1.add_record([tech_i, time_j, store_z, split_k]).value = OPEX_matrix[z][j][i][k]
+                p6.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_bot_opex_matrix[z][j][i][k]
+                p7.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_top_opex_matrix[z][j][i][k]
+                p8.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_bot_co2_matrix[z][j][i][k]
+                p9.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_top_co2_matrix[z][j][i][k]
 
 for j in range(len(time_set)):
     time_j = time_set[j]   
     p4.add_record(time_j).value = CO2_target[j]
 
-db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\input.gdx")
+db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\Inputs_advanced.gdx ")
+
+end = datetime.datetime.now()
+print(end-start)
 
 
 
