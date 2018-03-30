@@ -17,9 +17,14 @@ import numpy as np
 from scipy.optimize import curve_fit
 import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
+import decompose_fun_2 as decfun
+import Common.classStore as st
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
 class PV_CHP:
 
     def __init__(self,id_store,p_elec_mod= None,p_gas_mod = None, PV_price_mod = None, CHP_price_mod = None):
@@ -46,7 +51,24 @@ class PV_CHP:
 #            self.CHP_price
         self.PV_tech_id = 1
         self.id_store = id_store
+<<<<<<< HEAD
 
+=======
+        
+        self.store = st.store(id_store)
+        self.price_table = 'Utility_Prices_Aitor'
+        default_initial_time = datetime.datetime(2016,1,1)
+        default_final_time = datetime.datetime(2017,1,1)
+        self.time_start= int((default_initial_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
+        self.time_stop= int((default_final_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
+        self.store.getSimplePrice(self.time_start, self.time_stop, self.price_table)
+        self.store.getSimpleDemand(self.time_start, self.time_stop)        
+        self.store.getWeatherData(self.time_start, self.time_stop)
+        self.init_p_ele = self.store.p_ele
+        self.init_p_gas = self.store.p_gas
+        self.init_d_ele = self.store.d_ele
+    
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
     def func_linear_2d(self,x, a, b):
         return a*x+b
 
@@ -58,8 +80,18 @@ class PV_CHP:
 
     def func_exp(self, x, a, b, c, d):
         return a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
+<<<<<<< HEAD
 
     def function_approx(self):
+=======
+    
+    def function_approx(self,spl = None):
+        if spl is not None:# number of domains the data will be split in for the piecewise linear regression
+            spl = spl
+        else:
+            spl = 2
+        
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
         database_path = "Sainsburys.sqlite"
         conn = sqlite3.connect(database_path)
         cur = conn.cursor()
@@ -91,22 +123,35 @@ class PV_CHP:
             PV_size_array.append(n_panels)
 
             #elec and gas price modifiers
+<<<<<<< HEAD
             init_p_ele = PV_pb.store.p_ele
             PV_pb.store.p_ele = self.p_elec_mod*init_p_ele
             init_p_gas = PV_pb.store.p_gas
             PV_pb.store.p_gas = self.p_gas_mod*init_p_gas
 
+=======
+            
+            PV_pb.store.p_ele = self.p_elec_mod*self.init_p_ele
+            
+            PV_pb.store.p_gas = self.p_gas_mod*self.init_p_gas
+            
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
             #calculate solution, extract opex savings, carbon savings and electricity production
             PV_solution = PV_pb.SimulatePVonAllRoof(self.PV_tech_id,n_panels)
             PV_opex = PV_solution[1]
             PV_Carbon = PV_solution[4]
             PV_prod = PV_solution[6]
+<<<<<<< HEAD
 
             old_d_ele = PV_pb.store.d_ele # store demand without panels
 
+=======
+            
+            
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
             CHP_capex_array =[]
             CHP_size_array =[]
-            for tech_id in range(1,20):
+            for tech_id in range(1,21):
                 cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
                 dummy = cur.fetchall()
                 CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
@@ -114,6 +159,7 @@ class PV_CHP:
                 CHP_pb = BBC.CHPproblem(self.id_store)
 
                 #elec and gas price modifiers
+<<<<<<< HEAD
                 init_p_ele = CHP_pb.store.p_ele
                 CHP_pb.store.p_ele = self.p_elec_mod*init_p_ele
                 init_p_gas = CHP_pb.store.p_gas
@@ -122,6 +168,15 @@ class PV_CHP:
                 #adjust the elec demand according to pv elec production
                 CHP_pb.store.d_ele= abs(old_d_ele - PV_prod)
 
+=======
+
+                CHP_pb.store.p_ele = self.p_elec_mod*self.init_p_ele
+                CHP_pb.store.p_gas = self.p_gas_mod*self.init_p_gas
+                
+                #adjust the elec demand according to pv elec production 
+                CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
+                
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
                 CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id,tech_id],mod = [11.9/8.787,2.35/2.618,1,1], ECA_value = 0.26, table_string = 'Utility_Prices_Aitor _NoGasCCL')
                 CHP_opex = CHP_solution[4][0]
                 CHP_Carbon=CHP_solution[5][2]
@@ -148,9 +203,19 @@ class PV_CHP:
         #capex PV+CHP
         popt1, pcov1 = curve_fit(self.func_linear_3d, self.ind_variable, self.dep_variable1)
         #OPEX
+<<<<<<< HEAD
         popt2, pcov2 = curve_fit(self.func_poly, self.ind_variable, self.dep_variable2)
+=======
+        [p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable2,spl)
+        popt2 = np.vstack([p_best,intercept_best])
+        opex_lb = lb_best
+        opex_ub =ub_best
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
         #Carbon
-        popt3, pcov3 = curve_fit(self.func_poly, self.ind_variable, self.dep_variable3)
+        [p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable3,spl)
+        popt3 = np.vstack([p_best,intercept_best])
+        carbon_lb = lb_best
+        carbon_ub =ub_best
         #Capex PV
         self.ind_variable4 = np.array(PV_size_array, dtype=np.float64)
         popt4, pcov4 = curve_fit(self.func_linear_2d, self.ind_variable4, self.dep_variable4)
@@ -158,10 +223,15 @@ class PV_CHP:
         self.ind_variable5 = np.array(CHP_size_array, dtype=np.float64)
         popt5, pcov5 = curve_fit(self.func_linear_2d, self.ind_variable5, self.dep_variable5)
 
-        return(popt1,popt2,popt3,popt4,popt5)
+        return(popt1,popt2,popt3,popt4,popt5,opex_lb,opex_ub,carbon_lb,carbon_ub)
 
     def error(self): #Calculate and print prediction error indicators
+<<<<<<< HEAD
 
+=======
+    
+        #NEED TO CHANGE FOR OPEX AND CARBON 
+>>>>>>> 778d5c67d0e6fe60802ee59157ecf095ee6c713f
         coef = self.function_approx()
         # =============================================================================
         # CAPEX
