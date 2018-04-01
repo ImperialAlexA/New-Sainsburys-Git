@@ -1,4 +1,4 @@
-$gdxin Inputs_advanced.gdx
+$GDXIN in.gdx
 
 set t,s,tech,d;
 
@@ -15,7 +15,7 @@ x_limit_bot_co2(d,tech,t,s)
 x_limit_top_co2(d,tech,t,s)
 ;
 
-*to be done automatically trough python
+*to be done automatically through python
 $OnEps
 $load t
 $load s

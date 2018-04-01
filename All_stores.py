@@ -31,11 +31,11 @@ Store_id_range = np.array([elt[0] for elt in Index],dtype=np.float64)
 
 
 
-time_window = 2
+time_window = 30
 stores = 2
 year_start = 2020
 year_stop = 2050
-CO2_target = [2,4]
+CO2_target = np.zeros(time_window)
 
 tech_range = ['PV', 'CHP','dummy','ppa']
 modular = [1,0,1,1]
@@ -117,7 +117,7 @@ for store_id in Store_id_range[:stores]:
     x_limit_bot_co2_matrix.append(x_limit_bot_co2_h)
     x_limit_top_co2_matrix.append(x_limit_top_co2_h)
     
-    
+
     
 ############################################
 ### generate GAMS gdx file ###    
@@ -146,16 +146,16 @@ for z in store_set:
 for k in split_set:
     d.add_record(k)
     
-p0 = db.add_parameter_dc("K_CO2", [tech,t,s,d], "")
-p1 = db.add_parameter_dc("K_opex", [tech,t,s,d], "")
+p0 = db.add_parameter_dc("K_co2", [d,tech,t,s], "")
+p1 = db.add_parameter_dc("K_opex", [d,tech,t,s], "")
 p2 = db.add_parameter_dc("K0_capex", [tech,t], "")
 p3 = db.add_parameter_dc("K1_capex", [tech,t], "")
 p4 = db.add_parameter_dc("CO2_savingTarget", [t], "")
 p5 = db.add_parameter_dc("IO_modular", [tech], "")
-p6 = db.add_parameter_dc("x_limit_bot_opex", [tech,t,s,d], "")
-p7 = db.add_parameter_dc("x_limit_top_opex", [tech,t,s,d], "")
-p8 = db.add_parameter_dc("x_limit_bot_co2", [tech,t,s,d], "")
-p9 = db.add_parameter_dc("x_limit_top_co2", [tech,t,s,d], "")
+p6 = db.add_parameter_dc("x_limit_bot_opex", [d,tech,t,s], "")
+p7 = db.add_parameter_dc("x_limit_top_opex", [d,tech,t,s], "")
+p8 = db.add_parameter_dc("x_limit_bot_co2", [d,tech,t,s], "")
+p9 = db.add_parameter_dc("x_limit_top_co2", [d,tech,t,s], "")
        
 for i in range(len(tech_set)):
     tech_i = tech_set[i]
@@ -172,18 +172,18 @@ for i in range(len(tech_set)):
             for k in range(len(split_set)):
                 split_k = split_set[k]
                 
-                p0.add_record([tech_i, time_j, store_z, split_k]).value = Carbon_matrix[z][j][i][k]      
-                p1.add_record([tech_i, time_j, store_z, split_k]).value = OPEX_matrix[z][j][i][k]
-                p6.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_bot_opex_matrix[z][j][i][k]
-                p7.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_top_opex_matrix[z][j][i][k]
-                p8.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_bot_co2_matrix[z][j][i][k]
-                p9.add_record([tech_i, time_j, store_z, split_k]).value = x_limit_top_co2_matrix[z][j][i][k]
+                p0.add_record([split_k, tech_i, time_j, store_z]).value = Carbon_matrix[z][j][i][k]      
+                p1.add_record([split_k, tech_i, time_j, store_z]).value = OPEX_matrix[z][j][i][k]
+                p6.add_record([split_k, tech_i, time_j, store_z]).value = x_limit_bot_opex_matrix[z][j][i][k]
+                p7.add_record([split_k, tech_i, time_j, store_z]).value = x_limit_top_opex_matrix[z][j][i][k]
+                p8.add_record([split_k, tech_i, time_j, store_z]).value = x_limit_bot_co2_matrix[z][j][i][k]
+                p9.add_record([split_k, tech_i, time_j, store_z]).value = x_limit_top_co2_matrix[z][j][i][k]
 
 for j in range(len(time_set)):
     time_j = time_set[j]   
     p4.add_record(time_j).value = CO2_target[j]
 
-db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\Inputs_advanced.gdx ")
+db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\in.gdx ")
 
 end = datetime.datetime.now()
 print(end-start)

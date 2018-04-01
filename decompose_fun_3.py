@@ -83,7 +83,7 @@ def decompose(X_input,Y_input,spl):
             p_best = p
             intercept_best =intercept
             lb_best = lb
-            ub_best = ub
+            ub_best = ub   
         res_best_history[t] =  res_best  
     
     div = 0*np.ones((dim,1)); div[:,0] = (X_input.max(axis=0) - X_input.min(axis=0))

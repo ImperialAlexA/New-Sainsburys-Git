@@ -111,10 +111,8 @@ class PV_CHP:
             
             #elec and gas price modifiers
             
-            PV_pb.store.p_ele = self.p_elec_mod*self.init_p_ele
-            
-            PV_pb.store.p_gas = self.p_gas_mod*self.init_p_gas
-            
+            PV_pb.elec_price = self.p_elec_mod*self.init_p_ele
+            PV_pb.gas_price = self.p_gas_mod*self.init_p_gas
             #calculate solution, extract opex savings, carbon savings and electricity production
             PV_solution = PV_pb.SimulatePVonAllRoof(self.PV_tech_id,n_panels)
             PV_opex = PV_solution[1]
@@ -131,15 +129,11 @@ class PV_CHP:
                 CHP_tech_price = (dummy[0][2])*self.CHP_price_mod
                 CHP_pb = BBC.CHPproblem(self.id_store)
                 
-                #elec and gas price modifiers
-
-                CHP_pb.store.p_ele = self.p_elec_mod*self.init_p_ele
-                CHP_pb.store.p_gas = self.p_gas_mod*self.init_p_gas
-                
                 #adjust the elec demand according to pv elec production 
+
                 CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
                 
-                CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id,tech_id],mod = [11.9/8.787,2.35/2.618,1,1], ECA_value = 0.26, table_string = 'Utility_Prices_Aitor _NoGasCCL')
+                CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id],mod=[self.p_elec_mod,self.p_gas_mod,1,1], ECA_value = 0.26)
                 CHP_opex = CHP_solution[4][0]
                 CHP_Carbon=CHP_solution[5][2]
         

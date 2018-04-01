@@ -28,7 +28,7 @@ class PVproblem:
     
     def __init__(self, store_id):           
         self.store = st.store(store_id)
-        self.price_table = 'Utility_Prices_Aitor'
+        self.price_table = 'Utility_Prices_SSL'
         default_initial_time = datetime.datetime(2016,1,1)
         default_final_time = datetime.datetime(2017,1,1)
         self.time_start= int((default_initial_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
@@ -184,7 +184,6 @@ class PVproblem:
             Elec_surplus=mask1*(Total_Elec_prod-self.Elec_demand)
                     
                     # Costs
-                    
                     #policies=0.001
                     #gas_demand = np.array([0, 0, 1, 3, 2, 3, 9, 15, 31, 6, 0])
             BAU_carbon = (self.Elec_demand*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)

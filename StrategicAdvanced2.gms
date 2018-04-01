@@ -1,4 +1,4 @@
-$gdxin C:\Users\Anatole\Documents\GitHub\New-Sainsburys-Git\Inputs_advanced.gdx
+$GDXIN in.gdx
 
 set t,s,tech,d;
 
@@ -15,7 +15,7 @@ x_limit_bot_co2(d,tech,t,s)
 x_limit_top_co2(d,tech,t,s)
 ;
 
-*to be done automatically trough python
+*to be done automatically through python
 $OnEps
 $load t
 $load s
@@ -104,5 +104,5 @@ Solve Stratey using mip minimizing z;
 
 *psi.l(t)$(psi.l(t)=0) = EPS;
 
-execute_unload "output.gdx"   z  x co2Savings  capex   Inv_year   IO_installation IO_cons_opex
+execute_unload "output.gdx"   z  x co2Savings  capex   Inv_year   IO_installation IO_cons_opex  
 *execute "gdx2sqlite -i output.gdx -o output.db";

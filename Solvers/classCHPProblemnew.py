@@ -31,7 +31,7 @@ class CHPproblem:
     
     def __init__(self, store_id):
         self.store = st.store(store_id)
-        self.price_table = 'Utility_Prices_Aitor'
+        self.price_table = 'Utility_Prices_SSL'
         default_initial_time = datetime.datetime(2016,1,1)
         default_final_time = datetime.datetime(2017,1,1)
         self.time_start= int((default_initial_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
@@ -39,7 +39,7 @@ class CHPproblem:
         self.store.getSimplePrice(self.time_start, self.time_stop, self.price_table)
         self.store.getSimpleDemand(self.time_start, self.time_stop)
         self.boiler_eff = 0.87
-        self.hidden_costs = 353000
+        self.hidden_costs = 200000 + self.store.area*2
         #self.financial_lifetime = 15
         self.discount_rate = 0.09
         self.CHPQI_threshold = 105
@@ -228,7 +228,6 @@ class CHPproblem:
         [tech_data, utility_data] = self.calculate_data(mod = mod, uncertainty = uncertainty)
         [Boiler_eff, a_fuel, b_fuel, a_el, b_el, a_th,  b_th, psi_min, parasitic_load, mant_costs]  = tech_data  
         [el_price, el_price_exp, gas_price, th_demand, el_demand, gas_price_CHP] = utility_data
-
         ## calculate optimum part load    
         psi_el = (el_demand - b_el)/a_el
         psi_th = (th_demand - b_th)/a_th  
@@ -566,7 +565,6 @@ class CHPproblem:
         b_el = b_el-parasitic_load
         tech_data = [Boiler_eff, a_fuel, b_fuel, a_el, b_el, a_th,  b_th, psi_min, parasitic_load, mant_costs]
         el_efficiency = (a_el+b_el)/(a_fuel+b_fuel)
-        
         el_price = self.store.p_ele*mod[0]
         el_price_exp = self.store.p_ele_exp
         gas_price = self.store.p_gas*mod[1]
