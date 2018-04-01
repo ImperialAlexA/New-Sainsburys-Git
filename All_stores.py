@@ -1,7 +1,6 @@
-conda install -c anaconda paramiko# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Sun Feb 25 16:44:28 2018
-
 @author: Anatole
 """
 
@@ -17,9 +16,10 @@ import numpy as np
 from scipy.optimize import curve_fit
 import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
-#import Connection.classClusterConnection as cc
+import Connection.classClusterConnection as cc
 from gams import GamsWorkspace
 
+start = datetime.datetime.now()
 database_path = "Sainsburys.sqlite"
 conn = sqlite3.connect(database_path)
 cur = conn.cursor()
@@ -28,41 +28,30 @@ cur.execute('''SELECT Stores_id FROM Demand_Check Where Ele= {vn1} and Gas= {vn2
 Index = cur.fetchall()
 Store_id_range = np.array([elt[0] for elt in Index],dtype=np.float64)
 
-#Scenario Parameters
-#num_years = 2050-2018
-#num_periods = 3
-#Periods_length = num_years/num_periods
-#Elec_price_var= 1.06 # 6% increase p.a.
-#Gas_price_var= 1.03 # 3% increase p.a.
-#PV_price_var= 0.90 # 10% decrease p.a.
-#CHP_price_var=?
-
-#p_elec_mod_array =[]
-#p_gas_mod_array = []
-#for y in range(0, num_years):
-#    p_elec_mod_array.append(Elec_price_var**y)
-#    p_gas_mod_array.append(Gas_price_var**y)
-#
-#p_elec_mod = []
-#p_gas_mod = []
-#for i in range(0, len(p_elec_mod_array), int(Periods_length)):
-#    p_elec_mod.append(np.average(p_elec_mod_array[i:i + int(Periods_length)]))
-#    p_gas_mod.append(np.average(p_gas_mod_array[i:i + int(Periods_length)]))
 
 
 time_window = 30
 stores = 2
 year_start = 2020
 year_stop = 2050
-<<<<<<< HEAD
 CO2_target = np.zeros(time_window)
-=======
->>>>>>> 298dc1e4907d4896c9f840827a94cd7e46f52bc0
 
 tech_range = ['PV', 'CHP','dummy','ppa']
-modular = [1,0,1]
-ppa_co2_coef = 0 #CO2 savings=ppa_co2_coef*ppa_size
-ppa_opex_coef = 0 #opex savings=ppa_opex_coef*ppa_size
+modular = [1,0,1,1]
+split = 2 #SPlit the data for opex and carbon to generate coef of piecewise linear function
+
+#define the coefficients for ppa manually to allow for future addition of ppa to model (now all zeros)
+ppa_co2_coef = np.zeros(4) #CO2 savings=ppa_co2_coef*ppa_size
+ppa_opex_coef = np.zeros(4) #opex savings=ppa_opex_coef*ppa_size
+ppa_limit_bot_opex = np.zeros(4)
+ppa_limit_top_opex = np.ones(4)
+ppa_limit_bot_co2 = np.zeros(4)
+ppa_limit_top_co2 = np.ones(4)
+
+dummy_limit_bot_opex = np.zeros(4)
+dummy_limit_top_opex =2*np.ones(4)
+dummy_limit_bot_co2 = np.zeros(4)
+dummy_limit_top_co2 = 2*np.ones(4)
 
 
 ele_price_increase = 0.06  # % electricity price increase each year
@@ -80,27 +69,45 @@ CHP_mod = np.power(1+capex_reduction_CHP, np.linspace(year_start,year_stop, time
 PV_mod = np.power(1+capex_reduction_PV, np.linspace(year_start,year_stop, time_window+1)[0:-1] - year_start)
 
 
-matrix = []
-CAPEX = []
-
-store_id = 2003
-solution = PC.PV_CHP(store_id).function_approx()
-
 Carbon_matrix =[]
 OPEX_matrix = []
+x_limit_bot_opex_matrix = []
+x_limit_top_opex_matrix = []
+x_limit_bot_co2_matrix = []
+x_limit_top_co2_matrix = []
 for store_id in Store_id_range[:stores]:
+    print('store:%d' %store_id)
     Carbonh = []
     OPEXh = []
+    Capex_p0 = []
+    Capex_p1 = []
+    x_limit_bot_opex_h = []
+    x_limit_top_opex_h = []
+    x_limit_bot_co2_h = []
+    x_limit_top_co2_h = []
     for n in range(0,time_window):
+        print('Time window:%d' %n)
 
-        solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n], p_gas_mod=p_gas_mod[n], PV_price_mod= PV_mod[n], CHP_price_mod=CHP_mod[n]).function_approx()
+        solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n], p_gas_mod=p_gas_mod[n], PV_price_mod= PV_mod[n], CHP_price_mod=CHP_mod[n]).function_approx(spl=split)
         OPEX_p = solution[1]
-        CARBON_p1 = solution[2]
-        CARBON_p2 = solution[3]
-        CAPEX_p =  solution[0]
+        CARBON_p = solution[2]
+        CAPEX_PV_p =  solution[3]
+        CAPEX_CHP_p = solution[4]
+        x_limit_bot_opex = solution[5]
+        x_limit_top_opex = solution[6]
+        x_limit_bot_co2 = solution[7]
+        x_limit_top_co2 = solution[8]
         
-        Carbonh.append([CARBON_p1,ppa_co2_coef])
-        OPEXh.append([OPEX_p, ppa_opex_coef])
+        Carbonh.append(np.vstack([CARBON_p,ppa_co2_coef]))
+        OPEXh.append(np.vstack([OPEX_p, ppa_opex_coef]))
+        Capex_p0.append([CAPEX_PV_p[1],CAPEX_CHP_p[1],0,0]) # two last entries are for dummy and ppa
+        Capex_p1.append([CAPEX_PV_p[0],CAPEX_CHP_p[0],0,0])
+        
+        x_limit_bot_opex_h.append(np.vstack([x_limit_bot_opex,dummy_limit_bot_opex,ppa_limit_bot_opex]))
+        x_limit_top_opex_h.append(np.vstack([x_limit_top_opex,dummy_limit_top_opex,ppa_limit_top_opex]))
+        x_limit_bot_co2_h.append(np.vstack([x_limit_bot_co2,dummy_limit_bot_co2,ppa_limit_bot_co2]))
+        x_limit_top_co2_h.append(np.vstack([x_limit_top_co2,dummy_limit_top_co2,ppa_limit_top_co2]))
+        
         
     Carbon_matrix.append(Carbonh)
     OPEX_matrix.append(OPEXh)
@@ -109,9 +116,8 @@ for store_id in Store_id_range[:stores]:
     x_limit_bot_co2_matrix.append(x_limit_bot_co2_h)
     x_limit_top_co2_matrix.append(x_limit_top_co2_h)
     
-    
-#        matrix.append([OPEX_p, CARBON_p1, CARBON_p2, CAPEX_p])
 
+    
 ############################################
 ### generate GAMS gdx file ###    
 ############################################
@@ -122,14 +128,12 @@ db =ws.add_database()
 time_set = np.char.mod('%d', year)
 store_set = np.char.mod('%d', Store_id_range[:stores])
 tech_set = np.array(tech_range)
+split_set = np.char.mod('%d', np.arange(split**2))
 
 tech = db.add_set("tech",1,"")
 t = db.add_set("t",1,"")
 s = db.add_set("s",1,"")
-
-#for n in time_set:
-#    print(n)
-#    t.add_record(n)
+d = db.add_set("d",1,"")
 
 
 for n in tech_set:
@@ -138,6 +142,8 @@ for m in time_set:
     t.add_record(m)
 for z in store_set:
     s.add_record(z)
+for k in split_set:
+    d.add_record(k)
     
 p0 = db.add_parameter_dc("K_co2", [d,tech,t,s], "")
 p1 = db.add_parameter_dc("K_opex", [d,tech,t,s], "")
@@ -149,16 +155,15 @@ p6 = db.add_parameter_dc("x_limit_bot_opex", [d,tech,t,s], "")
 p7 = db.add_parameter_dc("x_limit_top_opex", [d,tech,t,s], "")
 p8 = db.add_parameter_dc("x_limit_bot_co2", [d,tech,t,s], "")
 p9 = db.add_parameter_dc("x_limit_top_co2", [d,tech,t,s], "")
-
        
 for i in range(len(tech_set)):
     tech_i = tech_set[i]
-    p6.add_record(tech_i).value = modular[i]
+    p5.add_record(tech_i).value = modular[i]
     
     for j in range(len(time_set)):
         time_j = time_set[j] 
-#        p2.add_record(time_i).value = 
-#        p3.add_record(time_j).value =
+        p2.add_record([tech_i, time_j]).value = Capex_p0[j][i]
+        p3.add_record([tech_i, time_j]).value = Capex_p1[j][i]
 
         for z in range(len(store_set)):
             store_z = store_set[z]
@@ -181,10 +186,3 @@ db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\in.gdx ")
 
 end = datetime.datetime.now()
 print(end-start)
-
-
-
-
-
-
-    
