@@ -8,13 +8,14 @@ Created on Tue Mar  6 11:28:47 2018
 import numpy as np
 from sklearn import linear_model
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
-def decompose(X_input,Y_input,spl):
+
+def decompose(X_input,Y_input,spl):    
     n_iter = 15
     dim = X_input.shape[1]
     #conduct scaling 
     X = (X_input - X_input.min(axis=0))/(X_input.max(axis=0) - X_input.min(axis=0));
+    print(X)
     Y = (Y_input - Y_input.min(axis=0))/(Y_input.max(axis=0) - Y_input.min(axis=0));
     ##check for consistency of data input:
     #to do    
@@ -48,19 +49,14 @@ def decompose(X_input,Y_input,spl):
             lb = 0*np.ones((dim,d))
             ub = 0*np.ones((dim,d))    
             res = 0*np.ones((1,d))           
-
+            regr = linear_model.LinearRegression()
             for i in range(d):
-                if i == 0:
-                    regr = linear_model.LinearRegression(fit_intercept=True)
-                else:
-                    regr = linear_model.LinearRegression(fit_intercept=True)
                 f1 = arr_pos[:,i].astype(int)
                 f2 = np.arange(lb0.shape[0]).astype(int)
                 lb[:,i] = lb0[f2,f1] 
-                ub[:,i] = ub0[f2,f1]
-                lb_IO = X >= lb[:,i]
-                ub_IO = X <= ub[:,i]    
-
+                ub[:,i] = ub0[f2,f1] 
+                lb_IO = X > lb[:,i]
+                ub_IO = X < ub[:,i]
                 mask = np.logical_and(np.all(lb_IO, axis = 1), np.all(ub_IO, axis = 1))
                 
                 X0 = X[mask]
@@ -74,23 +70,21 @@ def decompose(X_input,Y_input,spl):
         except:    
               fault = fault + 1
               resTot = 10000
-              if fault > 5:
-                  print("something is worng with the problem")
-                  raise 
+              if fault > 12:
+                  raise Exception("something is worng with the problem")
         #store parameters if good          
         if resTot < res_best:
             res_best = resTot
             p_best = p
             intercept_best =intercept
             lb_best = lb
-            ub_best = ub
+            ub_best = ub      
         res_best_history[t] =  res_best  
     
     div = 0*np.ones((dim,1)); div[:,0] = (X_input.max(axis=0) - X_input.min(axis=0))
     p_best = np.divide(p_best*(Y_input.max(axis=0) - Y_input.min(axis=0)),div)
-    intercept_best = intercept_best*(Y_input.max(axis=0) - Y_input.min(axis=0)) + Y_input.min(axis=0) - np.transpose(np.dot(np.transpose(p_best),X_input.min(axis=0)[:,None]))
+    intercept_best = intercept_best*(Y_input.max(axis=0) - Y_input.min(axis=0)) + Y_input.min(axis=0)
     lb_best = np.multiply(lb_best,div) + X_input.min(axis=0)[:,None]    
-    ub_best = np.multiply(ub_best,div) + X_input.min(axis=0)[:,None] 
     #interect and the otehr ub lb and res
     
     return(p_best, intercept_best, lb_best,ub_best,res_best_history)
@@ -102,38 +96,14 @@ if __name__ == "__main__":
     #to try
     dim = 2
     spl = 2
-    n_iter = 15    
-    n = 4000
-    X_input = np.random.rand(n,dim)  -0.5
-    #Y_input = 2*X_input[:,0]*X_input[:,1] + 3  + np.random.rand(n)
-    Y_input = abs(2*X_input[:,0])+abs(X_input[:,1]) #+ 3  + np.random.rand(n)
+    n_iter = 15  
+    n = 30
+    X_input = np.random.rand(n,dim)
+    Y_input = 2*X_input[:,0] + 3*X_input[:,1] + 3 + np.random.rand(n)
     
-    [p_best, intercept_best, lb_best, ub_best, res_best_history] = decompose(X_input,Y_input,spl)
-#    plt.plot(res_best_history)
-    print("coeff:", p_best)
-    print("intercept:", intercept_best)
-    for i in range(p_best.shape[1]):
-                lb_IO = X_input > lb_best[:,i]
-                ub_IO = X_input < ub_best[:,i]    
-                mask = np.logical_and(np.all(lb_IO, axis = 1), np.all(ub_IO, axis = 1))
-                X0 = X_input[mask]
-                print(X0.shape)
-                Y_fit = intercept_best[:,i] +  np.dot(X0,p_best[:,i][:,None])
-                if i == 0:
-                   X_tot = X0
-                   Y_tot = Y_fit
-                else:    
-                    X_tot= np.append(X_tot,X0, axis =0)
-                    Y_tot=np.append(Y_tot,Y_fit)
-#                fig = plt.figure()
-#                ax = Axes3D(fig)
-#                ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
-#                ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 1)    
+    [p_best, intercept_best, lb_best,ub_best,res_best_history] = decompose(X_input,Y_input,spl)
+    plt.plot(res_best_history)
+    print(p_best)
 
 
-    fig = plt.figure()
-    ax = Axes3D(fig)
-    ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
-    ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 1)
-   
 

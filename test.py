@@ -279,7 +279,7 @@ Y_input = dep_variable2
 
 dim = 2
 spl = 2
-n_iter = 60 
+n_iter = 15  
 n = 95
 X_input = np.random.rand(n,dim)
 X_input = np.transpose(ind_variable)
@@ -292,24 +292,3 @@ print(p_best)
 
 
 
-#TEST ELEC PV PRODUCTION AT DIFFERENT STORES
-import Solvers.classPVProblem as pb
-PV_pb = pb.PVproblem(2003)
-n_panels = 3000
-PV_solution = PV_pb.SimulatePVonAllRoof(1,n_panels)
-PV_opex = PV_solution[1]
-PV_Carbon =PV_solution[4]
-PV_prod = sum(PV_solution[6])
-print(PV_opex,PV_Carbon, PV_prod)
-
-
-#TEST IRRADIANCE FOR DIFFERENT STORES
-time_start_irr= 788928 #1/1/2015
-time_stop_irr= 806446  #1/1/2016 
-pb.PVproblem(2003).store.getWeatherData(time_start_irr,time_stop_irr)
-sum(pb.PVproblem(2003).store.irr)
-
-import cProfile
-import All_stores
-
-cProfile.run(All_stores)
