@@ -9,6 +9,8 @@ import gdxpds
 import pandas as pd
 
 
+
+
 gdx_file = 'C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\out.gdx'
 dataframes = gdxpds.to_dataframes(gdx_file)
 for symbol_name, df in dataframes.items():

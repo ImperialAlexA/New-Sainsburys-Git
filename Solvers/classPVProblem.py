@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jan 25 16:24:43 2018
-
 @author: Alex  
 """
 import sqlite3
@@ -37,12 +36,17 @@ class PVproblem:
         self.store.getSimpleDemand(self.time_start, self.time_stop)
         self.store.getWeatherData(self.time_start, self.time_stop)
         
+        self.irradiance = self.store.irr
+        self.elec_price=self.store.p_ele
+        self.gas_price=self.store.p_gas
+        self.Elec_demand = self.store.d_ele
+        self.gas_demand=self.store.d_gas
+        
         self.discount_rate = 0.09
         self.roof_max_weight = 16 #(kg/m2)
-        self.roof_area= 400 #m2
         self.hidden_cost=2000 #£
         self.Roof_space_coeff=0.6 
-        self.roof_available_area= self.store.area*self.Roof_space_coeff #m2
+        self.roof_available_area= self.store.area*self.Roof_space_coeff*0.092903 #m2 (converted from ft2)
         self.cf_ele=0.370845 #kgCO2/kWh
         self.cf_gas = 0.1840 #kgCO2/kWh
         
@@ -71,8 +75,7 @@ class PVproblem:
 #        roof_available_area= roof_area*Roof_space_coeff #m2       
         opti_savings=0
         tech_range = range(1,4) 
-        df = pandas.read_excel('Irradiance-data.xlsx')
-        irradiance = self.store.irr
+#        df = pandas.read_excel('Irradiance-data.xlsx')
         
         for tech_id in tech_range:
             # initialize
@@ -85,34 +88,31 @@ class PVproblem:
             tech_area = self.tech.PV_Area #(m2)
             tech_weight = self.tech.PV_Weight #(kg)
             tech_power = self.tech.PV_Nominal_Power
-            elec_price=self.store.p_ele
-            gas_price=self.store.p_gas
-            Elec_demand = self.store.d_ele
-            gas_demand=self.store.d_gas
+
     
 
             if tech_weight / tech_area < self.roof_max_weight:
                 #irradiance = np.array([0,0,1,2,3,6,3,2,1,0,0])
-                Indiv_Elec_prod = (tech_eff * np.array(irradiance)*tech_area)/3600/2
+                Indiv_Elec_prod = (tech_eff * np.array(self.irradiance)*tech_area)/3600/2
                 N_panel = int(self.roof_available_area / tech_area)
                 Total_Elec_prod = N_panel * Indiv_Elec_prod 
                 panel_price = tech_price*tech_power
                # Elec_demand = np.array([0, 0, 3, 5, 6, 7, 23, 34, 120, 23, 0])
                 
-                mask0=(Total_Elec_prod<Elec_demand).astype(int)
-                mask1=(Total_Elec_prod>Elec_demand).astype(int)
-                Elec_grid = mask0*(Elec_demand - Total_Elec_prod)
-                Elec_surplus=mask1*(Total_Elec_prod-Elec_demand)
+                mask0=(Total_Elec_prod<self.Elec_demand).astype(int)
+                mask1=(Total_Elec_prod>self.Elec_demand).astype(int)
+                Elec_grid = mask0*(self.Elec_demand - Total_Elec_prod)
+                Elec_surplus=mask1*(Total_Elec_prod-self.Elec_demand)
                 
                 # Costs
                 
                 #policies=0.001
                 #gas_demand = np.array([0, 0, 1, 3, 2, 3, 9, 15, 31, 6, 0])
                 Total_capex = N_panel * panel_price + self.hidden_cost 
-                Opex_savings = Total_Elec_prod *(elec_price)*10**(-2) #+policies) 
-                op_cost_HH_pound = (Elec_grid-Elec_surplus)*elec_price*10**(-2) + gas_demand*gas_price*10**(-2)
-                BAU_carbon = (Elec_demand*self.cf_ele + gas_demand*self.cf_gas)/ 1000 # (tCO2)
-                Carbon_PV=(Elec_grid*self.cf_ele + gas_demand*self.cf_gas)/ 1000 # (tCO2)
+                Opex_savings = Total_Elec_prod *(self.elec_price)*10**(-2) #+policies) 
+                op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)
+                BAU_carbon = (self.Elec_demand*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
+                Carbon_PV=(Elec_grid*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
                 Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
                 if np.sum(Opex_savings) > opti_savings: 
                     best_tech = tech_name
@@ -153,8 +153,8 @@ class PVproblem:
 
     def SimulatePVonAllRoof(self, tech_id, N_panel ): 
 
-        df = pandas.read_excel('Irradiance-data.xlsx')
-        irradiance = df['161_data'].values
+#        df = pandas.read_excel('Irradiance-data.xlsx')
+#        irradiance = df['161_data'].values
         # initialize
         self.putTechPV(tech_id)
         tech_name = self.tech.PVtech_name
@@ -164,39 +164,35 @@ class PVproblem:
         tech_area = self.tech.PV_Area #(m2)
         tech_weight = self.tech.PV_Weight #(kg)
         tech_power = self.tech.PV_Nominal_Power
-        elec_price=self.store.p_ele
-        gas_price=self.store.p_gas
-        Elec_demand = self.store.d_ele
-        gas_demand=self.store.d_gas
         
         if N_panel>self.Max_panel_number(tech_id):
             raise Exception("Area panels > Area roof")
         
         if tech_weight / tech_area < self.roof_max_weight:
                 #irradiance = np.array([0,0,1,2,3,6,3,2,1,0,0])
-            Indiv_Elec_prod = (tech_eff * np.array(irradiance)*tech_area)/3600/2
+            Indiv_Elec_prod = (tech_eff * np.array(self.irradiance)*tech_area)/3600/2
             #N_panel = int(self.roof_available_area / tech_area)
             Total_Elec_prod = N_panel * Indiv_Elec_prod
             Annual_Elec_prod = np.sum(Total_Elec_prod)
             panel_price = tech_price*tech_power
             # Elec_demand = np.array([0, 0, 3, 5, 6, 7, 23, 34, 120, 23, 0])
                     
-            mask0=(Total_Elec_prod<Elec_demand).astype(int)
-            mask1=(Total_Elec_prod>Elec_demand).astype(int)
-            Elec_grid = mask0*(Elec_demand - Total_Elec_prod)
-            Elec_surplus=mask1*(Total_Elec_prod-Elec_demand)
+            mask0=(Total_Elec_prod<self.Elec_demand).astype(int)
+            mask1=(Total_Elec_prod>self.Elec_demand).astype(int)
+            Elec_grid = mask0*(self.Elec_demand - Total_Elec_prod)
+            Elec_surplus=mask1*(Total_Elec_prod-self.Elec_demand)
                     
                     # Costs
                     #policies=0.001
                     #gas_demand = np.array([0, 0, 1, 3, 2, 3, 9, 15, 31, 6, 0])
-            BAU_carbon = (Elec_demand*self.cf_ele + gas_demand*self.cf_gas)/ 1000 # (tCO2)
-            Carbon_PV=((Elec_demand-Total_Elec_prod)*self.cf_ele + gas_demand*self.cf_gas)/ 1000 # (tCO2)
+            BAU_carbon = (self.Elec_demand*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
+            Carbon_PV=((self.Elec_demand-Total_Elec_prod)*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
             Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
             Annual_Carbon_savings=np.sum(Carbon_savings)
             Total_capex = N_panel * panel_price + self.hidden_cost
-            Opex_savings = Total_Elec_prod *(elec_price)*10**(-2) #+policies) 
+            Opex_savings = Total_Elec_prod *(self.elec_price)*10**(-2) #+policies) 
             Annual_Opex_savings=np.sum(Opex_savings)
-            op_cost_HH_pound = (Elec_grid-Elec_surplus)*elec_price*10**(-2) + gas_demand*gas_price*10**(-2)
+            op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)
                    
         return (tech_name, Annual_Opex_savings, Total_capex, Annual_Elec_prod,Annual_Carbon_savings,N_panel, Total_Elec_prod)
                 # get tech data
