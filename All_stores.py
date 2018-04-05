@@ -27,13 +27,15 @@ cur = conn.cursor()
 cur.execute('''SELECT Stores_id FROM Demand_Check Where Ele= {vn1} and Gas= {vn2}'''.format(vn1=1,vn2=1))
 Index = cur.fetchall()
 Store_id_range = np.array([elt[0] for elt in Index],dtype=np.float64)
+conn.close()
 
+Store_id_range = np.delete(Store_id_range,44) # =store 2017 not included because of errors
 
-
-time_window = 30
-stores = 2
+time_window = 2 
+stores = len(Store_id_range)
 year_start = 2020
 year_stop = 2050
+time_window_length=(year_stop-year_start)/time_window
 CO2_target = np.zeros(time_window)
 
 tech_range = ['PV', 'CHP','dummy','ppa']
@@ -75,6 +77,7 @@ x_limit_bot_opex_matrix = []
 x_limit_top_opex_matrix = []
 x_limit_bot_co2_matrix = []
 x_limit_top_co2_matrix = []
+
 for store_id in Store_id_range[:stores]:
     print('store:%d' %store_id)
     Carbonh = []

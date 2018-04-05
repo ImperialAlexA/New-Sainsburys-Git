@@ -19,7 +19,7 @@ import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
 
 
-store_id = 2003
+store_id = 26
 sol = PC.PV_CHP(store_id)
 
 coef = sol.function_approx()

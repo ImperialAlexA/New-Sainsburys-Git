@@ -104,5 +104,5 @@ Solve Stratey using mip minimizing z;
 
 *psi.l(t)$(psi.l(t)=0) = EPS;
 
-execute_unload "output.gdx"   z  x co2Savings  capex   Inv_year   IO_installation IO_cons_opex  
+execute_unload "output.gdx"   z  x co2Savings  capex   Inv_year   IO_installation IO_cons_opex
 *execute "gdx2sqlite -i output.gdx -o output.db";

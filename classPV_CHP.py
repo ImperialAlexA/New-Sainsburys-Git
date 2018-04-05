@@ -156,7 +156,7 @@ class PV_CHP:
         self.dep_variable3 = np.array(Carbon_array, dtype=np.float64)
         self.dep_variable4 = np.array(PV_capex_array, dtype=np.float64)
         self.dep_variable5 = np.array(CHP_capex_array, dtype=np.float64)
-
+        print(self.dep_variable2[-1])
         #============CALCULATE CURVE COEFFICIENTS==============================
         #capex PV+CHP
         popt1, pcov1 = curve_fit(self.func_linear_3d, self.ind_variable, self.dep_variable1)
