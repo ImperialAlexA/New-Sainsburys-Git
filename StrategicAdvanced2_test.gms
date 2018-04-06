@@ -93,7 +93,7 @@ Con_co2Savings(t)..                        sum(s,co2Savings(t,s))  =g=   CO2_sav
 Con_size_increase(tech,t,s)..              x(tech,t,s)=g=x(tech,t-1,s);
 Con_size_0(tech,t,s)..                     x('dummy',t,s)=e=1;
 Con_IO_installation(tech,t,s)..            IO_installation(tech,t,s) =g= (x(tech,t,s)-x(tech,t-1,s))*0.0001 - IO_modular(tech)*100000;
-Con_non_modular_capex(tech,t,s)..          non_modular_capex(tech,t,s) =g=   (K0_capex(tech,t) + K1_capex(tech,t)*x(tech,t-1,s)) - (1-IO_installation(tech,t,s))*1000000;
+Con_non_modular_capex(tech,t,s)..          non_modular_capex(tech,t,s) =g=   (K0_capex(tech,t) + K1_capex(tech,t)*x(tech,t,s)) - (1-IO_installation(tech,t,s))*1000000;
 
 
 Model Stratey  /all/;
