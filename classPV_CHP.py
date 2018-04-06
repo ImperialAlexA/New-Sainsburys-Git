@@ -23,7 +23,7 @@ import Common.classStore as st
 
 class PV_CHP:
 
-    def __init__(self,id_store,p_elec_mod= None,p_gas_mod = None, PV_price_mod = None, CHP_price_mod = None):
+    def __init__(self,id_store,p_elec_mod= None,p_gas_mod = None, PV_price_mod = None, CHP_price_mod = None, cf_mod = None):
         if p_elec_mod is not None:
             self.p_elec_mod = p_elec_mod
         else:
@@ -42,9 +42,11 @@ class PV_CHP:
             self.CHP_price_mod = CHP_price_mod
         else:
             self.CHP_price_mod = 1
+        if cf_mod is not None:
+            self.cf_mod = cf_mod
+        else:
+            self.cf_mod = 1 
 
-#        if CHP_capex_mod is not None:
-#            self.CHP_price
         self.PV_tech_id = 1
         self.id_store = id_store
 
@@ -143,7 +145,7 @@ class PV_CHP:
                 CHP_array.extend(CHP_tech_size)
                 Capex_array.append(CHP_tech_price+PV_capex)
                 OPEX_array.append(CHP_opex+PV_opex)
-                Carbon_array.append(PV_Carbon+CHP_Carbon)
+                Carbon_array.append((PV_Carbon+CHP_Carbon)*self.cf_mod)
 
                 #arrays for 2D capex plots
                 CHP_capex_array.append(CHP_tech_price)
@@ -156,7 +158,6 @@ class PV_CHP:
         self.dep_variable3 = np.array(Carbon_array, dtype=np.float64)
         self.dep_variable4 = np.array(PV_capex_array, dtype=np.float64)
         self.dep_variable5 = np.array(CHP_capex_array, dtype=np.float64)
-        print(self.dep_variable2[-1])
         #============CALCULATE CURVE COEFFICIENTS==============================
         #capex PV+CHP
         popt1, pcov1 = curve_fit(self.func_linear_3d, self.ind_variable, self.dep_variable1)

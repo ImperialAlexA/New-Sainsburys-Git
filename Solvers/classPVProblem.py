@@ -44,11 +44,15 @@ class PVproblem:
         
         self.discount_rate = 0.09
         self.roof_max_weight = 16 #(kg/m2)
-        self.hidden_cost=2000 #£
+        inverter_price = 21.98 # (£/panel)
+        Other_BOS_costs = 73.25 #(£/panel)
+        self.hidden_cost=inverter_price+Other_BOS_costs #£/panel
         self.Roof_space_coeff=0.6 
         self.roof_available_area= self.store.area*self.Roof_space_coeff*0.092903 #m2 (converted from ft2)
-        self.cf_ele=0.370845 #kgCO2/kWh
-        self.cf_gas = 0.1840 #kgCO2/kWh
+        self.cf_ele=0.35156  #kgCO2/kWh
+        self.cf_gas = 0.18416 #kgCO2/kWh
+        self.FIT = 0.15 #Feed in Tariff for capacities above 1MW (pence/kWh)
+         
         
         
         
@@ -108,8 +112,8 @@ class PVproblem:
                 
                 #policies=0.001
                 #gas_demand = np.array([0, 0, 1, 3, 2, 3, 9, 15, 31, 6, 0])
-                Total_capex = N_panel * panel_price + self.hidden_cost 
-                Opex_savings = Total_Elec_prod *(self.elec_price)*10**(-2) #+policies) 
+                Total_capex = N_panel * (panel_price + self.hidden_cost) 
+                Opex_savings = Total_Elec_prod *(self.elec_price + self.FIT )*10**(-2) 
                 op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)
                 BAU_carbon = (self.Elec_demand*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
                 Carbon_PV=(Elec_grid*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
@@ -189,8 +193,8 @@ class PVproblem:
             Carbon_PV=((self.Elec_demand-Total_Elec_prod)*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
             Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
             Annual_Carbon_savings=np.sum(Carbon_savings)
-            Total_capex = N_panel * panel_price + self.hidden_cost
-            Opex_savings = Total_Elec_prod *(self.elec_price)*10**(-2) #+policies) 
+            Total_capex = N_panel * (panel_price + self.hidden_cost)
+            Opex_savings = Total_Elec_prod *(self.elec_price+self.FIT)*10**(-2)
             Annual_Opex_savings=np.sum(Opex_savings)
             op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)
                    

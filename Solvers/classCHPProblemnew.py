@@ -898,9 +898,9 @@ class CHPproblem:
         check_psi[check_psi == 0] = 1
         if min(check_psi) < (psi_min):
             raise Exception("part load less than minimum part load")
-        biometh_CF=0.0328
-        gas_CF = 0.1840
-        ele_CF = 0.370845
+        biometh_CF=0.00039546
+        gas_CF = 0.18416
+        ele_CF =   0.35156 
         mask000 = part_load > 0.01
         mask011 = (a_el * part_load + b_el) * mask000 > el_demand
         mask012 = (a_th * part_load + b_th) * mask000 > th_demand
