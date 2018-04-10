@@ -120,7 +120,7 @@ class CHPproblem:
         financials = [opti_year_savings, opti_payback, opti_NPV5savings, opti_ROI, opti_Cum_disc_cash_flow, opti_capex]
         carbon = [opti_BAU_carbon, opti_CHP_carbon, opti_carbon_savings,biomethane_usage]
         
-        return(opti_tech, opti_tech_name, opti_CHPQI, opti_part_load, financials, carbon)
+        return(opti_tech, opti_tech_name, opti_CHPQI, opti_part_load, financials, carbon, year_BAU_cost)
     
     
     

@@ -26,7 +26,11 @@ scenarios = [[0.07,0.035,-0.0025,-0.015,-0.06],
              [0.06,0.03,-0.0025,-0.01,-0.04],
              [0.045,0.025,-0.0025,-0.0075,-0.03],
              [0.035,0.035,-0.005,-0.0125,-0.03]] #[Two degrees:[ele,gas,CHP,PV,cf], Slow progression:[], Steady State:[],Consumer power: []]
+
+
+
 for scen in range(4):
+    
     print(scenario_names[scen])
 
     database_path = "Sainsburys.sqlite"
@@ -45,8 +49,20 @@ for scen in range(4):
     year_start = 2020
     year_stop = 2050
     time_window_length=(year_stop-year_start)/time_window
-    CO2_target = np.zeros(time_window)
     
+# =============================================================================
+#     gas_CF = 0.18416
+#     ele_CF =   0.35156 
+#     Gas_total = []
+#     Ele_total = []
+#     for id_store in Store_id_range[:stores]:
+#         Gas_total.append(sum(BBC.CHPproblem(id_store).store.d_gas))
+#         Ele_total.append(sum(BBC.CHPproblem(id_store).store.d_ele))
+#     Carbon = sum(Gas_total)*gas_CF+sum(Ele_total)*ele_CF
+#     
+#     CO2_target = np.ones(time_window)*[0.50,0.95]*Carbon/1000
+# =============================================================================
+    CO2_target = np.zeros(time_window)
     tech_range = ['PV', 'CHP','dummy','ppa']
     modular = [1,0,1,1]
     split = 2 #SPlit the data for opex and carbon to generate coef of piecewise linear function

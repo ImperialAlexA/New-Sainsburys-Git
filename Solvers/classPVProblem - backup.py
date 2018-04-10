@@ -193,17 +193,12 @@ class PVproblem:
             Carbon_PV=((self.Elec_demand-Total_Elec_prod)*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
             Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
             Annual_Carbon_savings=np.sum(Carbon_savings)
-            
             Total_capex = N_panel * (panel_price + self.hidden_cost)
-            
-            BAU_opex = (self.Elec_demand*self.elec_price + self.gas_demand*self.gas_price)*10**(-2)
-            op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)-Total_Elec_prod*self.FIT*10**(-2)
-            opex_savings_test= BAU_opex-op_cost_HH_pound
-            Annual_Opex_savings_test = sum(opex_savings_test)
             Opex_savings = Total_Elec_prod *(self.elec_price+self.FIT)*10**(-2)
             Annual_Opex_savings=np.sum(Opex_savings)
+            op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)
                    
-        return (tech_name, Annual_Opex_savings, Total_capex, Annual_Elec_prod,Annual_Carbon_savings,N_panel, Total_Elec_prod,BAU_opex)
+        return (tech_name, Annual_Opex_savings, Total_capex, Annual_Elec_prod,Annual_Carbon_savings,N_panel, Total_Elec_prod,op_cost_HH_pound)
                 # get tech data
                 # connect to database
                 # retrieve data

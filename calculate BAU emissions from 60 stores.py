@@ -36,25 +36,27 @@ Gas = []
 Ele =[]
 carbon =[]
 area = []
-#for id_store in Store_id_range:
-#    cur.execute(
-#        '''SELECT GD2016, ED2016, Carbon, Area FROM Stores Wh2ere id= {vn1}'''.format(
-#            vn1=id_store))
-#    Index = cur.fetchall()
-#    
-#    Gas.append(np.array([elt[0] for elt in Index])) #kWh
-#    Ele.append(np.array([elt[1] for elt in Index])) #kWh
-#    carbon.append(np.array([elt[2] for elt in Index]))
-#    area.append(np.array([elt[3] for elt in Index]))
 
-Gas = []
-Ele =[]    
+gas_CF = 0.18416
+ele_CF =   0.35156 
+
+Gas_total = []
+Ele_total = []
+BAU_op_cost = []
+
+BAU_op_cost_test = []
+BAU_op_cost_test2 =[]
+#mod=[2.759,1.675,1,1])
 for id_store in Store_id_range:
-    cur.execute(
-        '''SELECT Ele, Gas FROM Demand Where Stores_id= {vn1}'''.format(
-            vn1=id_store))
-    Index = cur.fetchall()
-    Gas.append(np.array([elt[0] for elt in Index])) #kWh
-    Ele.append(np.array([elt[1] for elt in Index])) #kWh
-    
-conn.close()
+#    sol=BBC.CHPproblem(id_store).store
+#    Gas_total.append(sum(BBC.CHPproblem(id_store).store.d_gas))
+#    Ele_total.append(sum(BBC.CHPproblem(id_store).store.d_ele))
+    BAU_op_cost.append(BBC.CHPproblem(id_store).SimpleOpti5NPV(mod=[2.759,1.675,1,1])[6])
+#    BAU_op_cost_test.append(sum(sol.d_ele*sol.p_ele+sol.d_gas*sol.p_gas)/100)
+#    BAU_op_cost_test2.append(pb.PVproblem(id_store).SimulatePVonAllRoof(1,1)[7])
+Carbon = sum(Gas_total)*gas_CF+sum(Ele_total)*ele_CF
+BAU_cost = sum(BAU_op_cost)
+#BAU_cost_test=sum(BAU_op_cost_test)
+#BAU_cost_test2=sum(BAU_op_cost_test2)
+
+

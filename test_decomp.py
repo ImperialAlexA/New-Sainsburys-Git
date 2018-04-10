@@ -16,78 +16,106 @@ from scipy.optimize import curve_fit
 import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
 import decompose_fun_2 as decfun
+import Common.classStore as st
 
-#database_path = "Sainsburys.sqlite"
-#conn = sqlite3.connect(database_path)
-#cur = conn.cursor()
-#conn.commit()
-#PV_tech_price = []
-#CHP_tech_size = []
-#CHP_tech_price = []
-#PV_capex = []
-#PV_array = []
-#CHP_array = []
-#Capex_array = []
-#OPEX_array = []
-#Carbon_array = []
-#id_store =26
-#PV_tech_id =1
-#
-#max_panels = pb.PVproblem(id_store).Max_panel_number(PV_tech_id)
-#panel_range = np.linspace(0,max_panels,10)
-#
-#PV_capex_array = []
-#PV_size_array = []
-#for n_panels in panel_range:
-#    cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (PV_tech_id,))
-#    dummy = cur.fetchall()
-#    PV_tech_price = dummy[0][2]
-#    PV_capex = PV_tech_price*n_panels
-#    PV_pb = pb.PVproblem(id_store)
-#    
-#    #arrays for 2D capex plots
-#    PV_capex_array.append(PV_capex)
-#    PV_size_array.append(n_panels)
-#    
-#    #calculate solution, extract opex savings, carbon savings and electricity production
-#    PV_solution = PV_pb.SimulatePVonAllRoof(PV_tech_id,n_panels)
-#    PV_opex = PV_solution[1]
-#    PV_Carbon = PV_solution[4]
-#    PV_prod = PV_solution[6]
-#    
-#
-#    CHP_capex_array =[]
-#    CHP_size_array =[]
-#    for tech_id in range(1,21):
-#        cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
-#        dummy = cur.fetchall()
-#        CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
-#        CHP_tech_price = (dummy[0][2])
-#        CHP_pb = BBC.CHPproblem(id_store)
-#        
-#        CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id,tech_id],mod = [11.9/8.787,2.35/2.618,1,1], ECA_value = 0.26, table_string = 'Utility_Prices_Aitor _NoGasCCL')
-#        CHP_opex = CHP_solution[4][0]
-#        CHP_Carbon=CHP_solution[5][2]
-#
-#        PV_array.append(n_panels)
-#        CHP_array.extend(CHP_tech_size)
-#        Capex_array.append(CHP_tech_price+PV_capex)
-#        OPEX_array.append(CHP_opex+PV_opex)
-#        Carbon_array.append(PV_Carbon+CHP_Carbon)
-#  
-#        #arrays for 2D capex plots
-#        CHP_capex_array.append(CHP_tech_price)
-#        CHP_size_array.extend(CHP_tech_size)
-#
-#
-#
-#ind_variable = np.array([PV_array,CHP_array], dtype=np.float64)
-#dep_variable1 = np.array(Capex_array, dtype=np.float64)
-#dep_variable2 = np.array(OPEX_array, dtype=np.float64)
-#dep_variable3 = np.array(Carbon_array, dtype=np.float64)
-#dep_variable4 = np.array(PV_capex_array, dtype=np.float64)
-#dep_variable5 = np.array(CHP_capex_array, dtype=np.float64)   
-#
+
+database_path = "Sainsburys.sqlite"
+conn = sqlite3.connect(database_path)
+cur = conn.cursor()
+conn.commit()
+PV_tech_price = []
+CHP_tech_size = []
+CHP_tech_price = []
+PV_capex = []
+PV_array = []
+CHP_array = []
+Capex_array = []
+OPEX_array = []
+Carbon_array = []
+id_store =51
+PV_tech_id =1
+
+store = st.store(id_store)
+price_table = 'Utility_Prices_SSL'
+default_initial_time = datetime.datetime(2016,1,1)
+default_final_time = datetime.datetime(2017,1,1)
+time_start= int((default_initial_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
+time_stop= int((default_final_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
+store.getSimplePrice(time_start, time_stop, price_table)
+store.getSimpleDemand(time_start, time_stop)        
+store.getWeatherData(time_start, time_stop)
+init_p_ele = store.p_ele
+init_p_gas = store.p_gas
+init_d_ele = store.d_ele
+
+p_elec_mod = 2.759
+p_gas_mod = 1.675
+        
+max_panels = pb.PVproblem(id_store).Max_panel_number(PV_tech_id)
+panel_range = np.linspace(0,max_panels,10)
+
+PV_capex_array = []
+PV_size_array = []
+for n_panels in panel_range:
+    cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (1,))
+    dummy = cur.fetchall()
+    PV_tech_price = dummy[0][2]
+    PV_capex = PV_tech_price*n_panels
+    PV_pb = pb.PVproblem(id_store)
+
+    #arrays for 2D capex plots
+    PV_capex_array.append(PV_capex)
+    PV_size_array.append(n_panels)
+
+    #elec and gas price modifiers
+
+    PV_pb.elec_price = p_elec_mod*init_p_ele
+    PV_pb.gas_price = p_gas_mod*init_p_gas
+
+    #calculate solution, extract opex savings, carbon savings and electricity production
+    PV_solution = PV_pb.SimulatePVonAllRoof(1,n_panels)
+    PV_opex = PV_solution[1]
+    PV_Carbon = PV_solution[4]
+    PV_prod = PV_solution[6]
+
+    CHP_capex_array =[]
+    CHP_size_array =[]
+    for tech_id in range(1,21):
+        cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
+        dummy = cur.fetchall()
+        CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
+        CHP_tech_price = (dummy[0][2])
+        CHP_pb = BBC.CHPproblem(id_store)
+ 
+        CHP_pb.store.p_ele = p_elec_mod*init_p_ele
+        CHP_pb.store.p_gas = p_gas_mod*init_p_gas
+
+        CHP_pb.store.d_ele= abs(init_d_ele - PV_prod)
+
+        CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id],mod=[p_elec_mod,p_gas_mod,1,1], ECA_value = 0.26)
+        
+        CHP_opex = CHP_solution[4][0]
+        CHP_Carbon=CHP_solution[5][2]
+
+        PV_array.append(n_panels)
+        CHP_array.extend(CHP_tech_size)
+        Capex_array.append(CHP_tech_price+PV_capex)
+        OPEX_array.append(CHP_opex+PV_opex)
+        Carbon_array.append((PV_Carbon+CHP_Carbon))
+
+        #arrays for 2D capex plots
+        CHP_capex_array.append(CHP_tech_price)
+        CHP_size_array.extend(CHP_tech_size)
+
+
+
+ind_variable = np.array([PV_array,CHP_array], dtype=np.float64)
+dep_variable1 = np.array(Capex_array, dtype=np.float64)
+dep_variable2 = np.array(OPEX_array, dtype=np.float64)
+dep_variable3 = np.array(Carbon_array, dtype=np.float64)
+dep_variable4 = np.array(PV_capex_array, dtype=np.float64)
+dep_variable5 = np.array(CHP_capex_array, dtype=np.float64)   
+
 spl = 2
 
 X_input = np.transpose(ind_variable)

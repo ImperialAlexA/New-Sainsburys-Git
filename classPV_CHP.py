@@ -51,7 +51,7 @@ class PV_CHP:
         self.id_store = id_store
 
         self.store = st.store(id_store)
-        self.price_table = 'Utility_Prices_Aitor'
+        self.price_table = 'Utility_Prices_SSL'
         default_initial_time = datetime.datetime(2016,1,1)
         default_final_time = datetime.datetime(2017,1,1)
         self.time_start= int((default_initial_time-datetime.datetime(1970,1,1)).total_seconds()/60/30)
@@ -131,13 +131,10 @@ class PV_CHP:
                 CHP_tech_price = (dummy[0][2])*self.CHP_price_mod
                 CHP_pb = BBC.CHPproblem(self.id_store)
 
-
-                CHP_pb.store.p_ele = self.p_elec_mod*self.init_p_ele
-                CHP_pb.store.p_gas = self.p_gas_mod*self.init_p_gas
-
                 CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
-                
+
                 CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id],mod=[self.p_elec_mod,self.p_gas_mod,1,1], ECA_value = 0.26)
+                
                 CHP_opex = CHP_solution[4][0]
                 CHP_Carbon=CHP_solution[5][2]
 
