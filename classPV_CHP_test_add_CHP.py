@@ -80,7 +80,6 @@ class PV_CHP:
             spl = spl
         else:
             spl = 2
-
         database_path = "Sainsburys.sqlite"
         conn = sqlite3.connect(database_path)
         cur = conn.cursor()
@@ -100,10 +99,13 @@ class PV_CHP:
 
         PV_capex_array = []
         PV_size_array = []
+        
+        cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (self.PV_tech_id,))
+        dummy_PV = cur.fetchall()
+        PV_tech_price = dummy_PV[0][2]*self.PV_price_mod
+        cur.execute('''SELECT * FROM Technologies''')
+        dummy_CHP = cur.fetchall()
         for n_panels in panel_range:
-            cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (self.PV_tech_id,))
-            dummy = cur.fetchall()
-            PV_tech_price = dummy[0][2]*self.PV_price_mod
             PV_capex = PV_tech_price*n_panels
             PV_pb = pb.PVproblem(self.id_store)
 
@@ -123,19 +125,23 @@ class PV_CHP:
 
             CHP_capex_array =[]
             CHP_size_array =[]
-            for tech_id in range(1,21):
-                cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
-                dummy = cur.fetchall()
-                CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
-                CHP_tech_price = (dummy[0][2])*self.CHP_price_mod
-                CHP_pb = BBC.CHPproblem(self.id_store)
-
-                CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
-
-                CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id],mod=[self.p_elec_mod,self.p_gas_mod,1,1], ECA_value = 0.26)
-                
-                CHP_opex = CHP_solution[4][0]
-                CHP_Carbon=CHP_solution[5][2]
+            for tech_id in range(0,21):
+                if tech_id == 20:
+                    CHP_tech_size = [0]
+                    CHP_tech_price = 0
+                    CHP_opex = 0
+                    CHP_Carbon = 0
+                else:
+                    CHP_tech_size =(list(map(int, re.findall('\d+', dummy_CHP[tech_id][1]))))
+                    CHP_tech_price = (dummy_CHP[tech_id][2])*self.CHP_price_mod
+                    CHP_pb = BBC.CHPproblem(self.id_store)
+    
+                    CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
+    
+                    CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id+1],mod=[self.p_elec_mod,self.p_gas_mod,1,1], ECA_value = 0.26)
+                    
+                    CHP_opex = CHP_solution[4][0]
+                    CHP_Carbon=CHP_solution[5][2]
 
                 PV_array.append(n_panels)
                 CHP_array.extend(CHP_tech_size)

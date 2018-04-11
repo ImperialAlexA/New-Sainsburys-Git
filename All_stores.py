@@ -4,7 +4,8 @@ Created on Sun Feb 25 16:44:28 2018
 @author: Anatole
 """
 
-import classPV_CHP as PC
+#import classPV_CHP as PC
+import classPV_CHP_test_add_CHP as PC
 import Solvers.classPVProblem as pb
 import Solvers.classCHPProblemnew as BBC
 import pandas as pd
@@ -29,8 +30,8 @@ scenarios = [[0.07,0.035,-0.0025,-0.015,-0.06],
 
 
 
+#for scen in range(4):
 for scen in range(4):
-    
     print(scenario_names[scen])
 
     database_path = "Sainsburys.sqlite"
