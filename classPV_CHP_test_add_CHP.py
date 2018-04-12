@@ -113,6 +113,7 @@ class PV_CHP:
             PV_capex_array.append(PV_capex)
             PV_size_array.append(n_panels)
 
+
             #elec and gas price modifiers
             PV_pb.elec_price = self.p_elec_mod*self.init_p_ele
             PV_pb.gas_price = self.p_gas_mod*self.init_p_gas
