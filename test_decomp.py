@@ -147,11 +147,12 @@ for i in range(p_best.shape[1]):
 
 print(intercept_best)
 
-fig = plt.figure()
+fig = plt.figure(1)
 ax = Axes3D(fig)
 ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
 ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 5)
 
+plt.figure(2)
 
 
 #import xlsxwriter

@@ -6,10 +6,8 @@ Created on Thu Jan 25 16:24:43 2018
 import sqlite3
 import numpy as np
 import datetime
-import calendar
 import os
 import sys
-import pandas 
 scriptpath = ".\\Common" # This is written in the Windows way of specifying paths, hopefully it works on Linux?
 sys.path.append(os.path.abspath(scriptpath))
 import Common.classStore as st # Module is in seperate folder, hence the elaboration

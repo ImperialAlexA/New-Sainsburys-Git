@@ -29,7 +29,7 @@ database_path = "Sainsburys.sqlite" # Path to database file
 
 class CHPproblem:
     
-    def __init__(self, store_id,NG=None):
+    def __init__(self, store_id):
         self.store = st.store(store_id)
         self.price_table = 'Utility_Prices_SSL'
         default_initial_time = datetime.datetime(2016,1,1)
@@ -44,12 +44,7 @@ class CHPproblem:
         self.discount_rate = 0.09
         self.CHPQI_threshold = 105
 
-        if NG is None:
-            self.NG_True_False =False
-        elif NG is False:
-            self.NG_True_False =False
-        elif NG is True:
-            self.NG_True_False =True
+
 
     # Find the best tech by iterating over each technology then determining
     # which is best. 3 different optimisation methods are provided, of which
@@ -573,10 +568,7 @@ class CHPproblem:
         el_price = self.store.p_ele*mod[0]
         el_price_exp = self.store.p_ele_exp
         gas_price = self.store.p_gas*mod[1]
-        if self.NG_True_False ==True:
-            gas_price_CHP = self.store.p_gas*mod[1]
-        elif self.NG_True_False ==False:
-            gas_price_CHP = (self.store.p_gas + mant_costs*el_efficiency*100)*mod[1]
+        gas_price_CHP = (self.store.p_gas + mant_costs*el_efficiency*100)*mod[1]
         th_demand = self.store.d_gas*Boiler_eff                  ##  kWth HH  ##
         el_demand = self.store.d_ele                             ##  kWel HH  ##
         utility_data = [el_price, el_price_exp, gas_price, th_demand, el_demand, gas_price_CHP]
@@ -906,10 +898,7 @@ class CHPproblem:
         check_psi[check_psi == 0] = 1
         if min(check_psi) < (psi_min):
             raise Exception("part load less than minimum part load")
-        if self.NG_True_False ==False:
-            biometh_CF=0.00039546
-        elif self.NG_True_False ==True:
-            biometh_CF = 0.18416
+        biometh_CF=0.00039546
         gas_CF = 0.18416
         ele_CF =   0.35156 
         mask000 = part_load > 0.01

@@ -5,19 +5,10 @@ Created on Sun Feb 25 16:44:28 2018
 """
 
 #import classPV_CHP as PC
-import classPV_CHP_test_add_CHP as PC
-import Solvers.classPVProblem as pb
-import Solvers.classCHPProblemnew as BBC
-import pandas as pd
+import classPV_CHP as PC
 import sqlite3
-import re
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-from scipy.optimize import curve_fit
 import datetime
-from sklearn.metrics import mean_absolute_error, r2_score
-import Connection.classClusterConnection as cc
 from gams import GamsWorkspace
 
 start = datetime.datetime.now()
@@ -30,7 +21,6 @@ scenarios = [[0.07,0.035,-0.0025,-0.015,-0.06],
 
 
 
-#for scen in range(4):
 for scen in range(4):
     print(scenario_names[scen])
 
@@ -45,10 +35,11 @@ for scen in range(4):
     
     Store_id_range = np.delete(Store_id_range,44) # =store 2017 not included because of errors
     
-    time_window = 2 
+    time_window = 30 
     stores = len(Store_id_range)
     year_start = 2020
     year_stop = 2050
+    NG_True_False = False #True: Natural Gas is used as fuel for CHP, False:Biomethane is used as fuel fro CHP
     time_window_length=(year_stop-year_start)/time_window
     
 # =============================================================================
@@ -119,7 +110,7 @@ for scen in range(4):
         for n in range(0,time_window):
             print('Time window:%d' %n)
     
-            solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n], p_gas_mod=p_gas_mod[n], PV_price_mod= PV_mod[n], CHP_price_mod=CHP_mod[n], cf_mod=cf_mod[n]).function_approx(spl=split)
+            solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n], p_gas_mod=p_gas_mod[n], PV_price_mod= PV_mod[n], CHP_price_mod=CHP_mod[n], cf_mod=cf_mod[n]).function_approx(spl=split,NG=NG_True_False)
             OPEX_p = solution[1]
             CARBON_p = solution[2]
             CAPEX_PV_p =  solution[3]

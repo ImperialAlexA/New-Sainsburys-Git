@@ -8,17 +8,14 @@ Created on Wed Feb 14 15:32:10 2018
 
 import Solvers.classPVProblem as pb
 import Solvers.classCHPProblemnew as BBC
-import pandas as pd
 import sqlite3
-import re
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from scipy.optimize import curve_fit
 import datetime
 from sklearn.metrics import mean_absolute_error, r2_score
 import decompose_fun_2 as decfun
 import Common.classStore as st
+import re
 
 
 class PV_CHP:
@@ -75,12 +72,17 @@ class PV_CHP:
     def func_exp(self, x, a, b, c, d):
         return a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
 
-    def function_approx(self,spl = None):
+    def function_approx(self,spl = None,NG=None):
         if spl is not None:# number of domains the data will be split in for the piecewise linear regression
             spl = spl
         else:
             spl = 2
-
+        if NG == None:
+            NG_True_False = False
+        elif NG == False:
+            NG_True_False = False
+        elif NG ==True:
+            NG_True_False = True
         database_path = "Sainsburys.sqlite"
         conn = sqlite3.connect(database_path)
         cur = conn.cursor()
@@ -100,16 +102,20 @@ class PV_CHP:
 
         PV_capex_array = []
         PV_size_array = []
+        
+        cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (self.PV_tech_id,))
+        dummy_PV = cur.fetchall()
+        PV_tech_price = dummy_PV[0][2]*self.PV_price_mod
+        cur.execute('''SELECT * FROM Technologies''')
+        dummy_CHP = cur.fetchall()
         for n_panels in panel_range:
-            cur.execute('''SELECT * FROM PV_Technologies WHERE id=?''', (self.PV_tech_id,))
-            dummy = cur.fetchall()
-            PV_tech_price = dummy[0][2]*self.PV_price_mod
             PV_capex = PV_tech_price*n_panels
             PV_pb = pb.PVproblem(self.id_store)
 
             #arrays for 2D capex plots
             PV_capex_array.append(PV_capex)
             PV_size_array.append(n_panels)
+
 
             #elec and gas price modifiers
             PV_pb.elec_price = self.p_elec_mod*self.init_p_ele
@@ -123,31 +129,37 @@ class PV_CHP:
 
             CHP_capex_array =[]
             CHP_size_array =[]
-            for tech_id in range(1,21):
-                cur.execute('''SELECT * FROM Technologies WHERE id=?''', (tech_id,))
-                dummy = cur.fetchall()
-                CHP_tech_size =(list(map(int, re.findall('\d+', dummy[0][1]))))
-                CHP_tech_price = (dummy[0][2])*self.CHP_price_mod
-                CHP_pb = BBC.CHPproblem(self.id_store)
-
-                CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
-
-                CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id],mod=[self.p_elec_mod,self.p_gas_mod,1,1], ECA_value = 0.26)
-                
-                CHP_opex = CHP_solution[4][0]
-                CHP_Carbon=CHP_solution[5][2]
+            for tech_id in range(0,21):
+                if tech_id == 20:
+                    CHP_tech_size = [0]
+                    CHP_tech_price = 0
+                    CHP_opex = 0
+                    CHP_Carbon = 0
+                else:
+                    CHP_tech_size =(list(map(int, re.findall('\d+', dummy_CHP[tech_id][1]))))
+                    CHP_tech_price = (dummy_CHP[tech_id][2])*self.CHP_price_mod
+                    CHP_pb = BBC.CHPproblem(self.id_store,NG=NG_True_False)
+    
+                    CHP_pb.store.d_ele= abs(self.init_d_ele - PV_prod)
+    
+                    CHP_solution = CHP_pb.SimpleOpti5NPV(tech_range=[tech_id+1],mod=[self.p_elec_mod,self.p_gas_mod,1,1], ECA_value = 0.26)
+                    
+                    CHP_opex = CHP_solution[4][0]
+                    CHP_Carbon=CHP_solution[5][2]
 
                 PV_array.append(n_panels)
                 CHP_array.extend(CHP_tech_size)
                 Capex_array.append(CHP_tech_price+PV_capex)
                 OPEX_array.append(CHP_opex+PV_opex)
                 Carbon_array.append((PV_Carbon+CHP_Carbon)*self.cf_mod)
-
+                
                 #arrays for 2D capex plots
                 CHP_capex_array.append(CHP_tech_price)
                 CHP_size_array.extend(CHP_tech_size)
 
-
+        
+        print('OPEX%s'%sum(OPEX_array))
+        print('Carbon%s'%sum(Carbon_array))
         self.ind_variable = np.array([PV_array,CHP_array], dtype=np.float64)
         self.dep_variable1 = np.array(Capex_array, dtype=np.float64)
         self.dep_variable2 = np.array(OPEX_array, dtype=np.float64)
