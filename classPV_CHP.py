@@ -72,16 +72,16 @@ class PV_CHP:
     def func_exp(self, x, a, b, c, d):
         return a*np.exp((-b)*x[0])+c*np.exp((-d)*x[1])
 
-    def function_approx(self,spl = None,NG=None):
+    def function_approx(self,spl = None,NG = None):
         if spl is not None:# number of domains the data will be split in for the piecewise linear regression
             spl = spl
         else:
             spl = 2
-        if NG == None:
+        if NG is None:
             NG_True_False = False
-        elif NG == False:
+        elif NG is False:
             NG_True_False = False
-        elif NG ==True:
+        elif NG is True:
             NG_True_False = True
         database_path = "Sainsburys.sqlite"
         conn = sqlite3.connect(database_path)
@@ -158,8 +158,6 @@ class PV_CHP:
                 CHP_size_array.extend(CHP_tech_size)
 
         
-        print('OPEX%s'%sum(OPEX_array))
-        print('Carbon%s'%sum(Carbon_array))
         self.ind_variable = np.array([PV_array,CHP_array], dtype=np.float64)
         self.dep_variable1 = np.array(Capex_array, dtype=np.float64)
         self.dep_variable2 = np.array(OPEX_array, dtype=np.float64)

@@ -21,7 +21,7 @@ scenarios = [[0.07,0.035,-0.0025,-0.015,-0.06],
 
 
 
-for scen in range(4):
+for scen in range(2,3):
     print(scenario_names[scen])
 
     database_path = "Sainsburys.sqlite"
@@ -39,7 +39,7 @@ for scen in range(4):
     stores = len(Store_id_range)
     year_start = 2020
     year_stop = 2050
-    NG_True_False = False #True: Natural Gas is used as fuel for CHP, False:Biomethane is used as fuel fro CHP
+    NG_True_False = True #True: Natural Gas is used as fuel for CHP, False:Biomethane is used as fuel for CHP
     time_window_length=(year_stop-year_start)/time_window
     
 # =============================================================================
@@ -108,7 +108,7 @@ for scen in range(4):
         x_limit_bot_co2_h = []
         x_limit_top_co2_h = []
         for n in range(0,time_window):
-            print('Time window:%d' %n)
+            print('Time window:%d' %year[n])
     
             solution = PC.PV_CHP(store_id,p_elec_mod=p_elec_mod[n], p_gas_mod=p_gas_mod[n], PV_price_mod= PV_mod[n], CHP_price_mod=CHP_mod[n], cf_mod=cf_mod[n]).function_approx(spl=split,NG=NG_True_False)
             OPEX_p = solution[1]
