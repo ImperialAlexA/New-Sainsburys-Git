@@ -30,7 +30,7 @@ scenarios = [[0.07,0.035,-0.0025,-0.015,-0.06],
 
 
 
-for scen in range(2,3):
+for scen in range(4):
     print(scenario_names[scen])
 
     database_path = "Sainsburys.sqlite"
@@ -44,11 +44,11 @@ for scen in range(2,3):
     
     Store_id_range = np.delete(Store_id_range,44) # =store 2017 not included because of errors
     
-    time_window = 2 
+    time_window = 30 
     stores = 62
     year_start = 2020
     year_stop = 2050
-    NG_True_False = True #True: Natural Gas is used as fuel for CHP, False:Biomethane is used as fuel for CHP
+    NG_True_False = False #True: Natural Gas is used as fuel for CHP, False:Biomethane is used as fuel for CHP
     time_window_length=(year_stop-year_start)/time_window
     
     CO2_target = np.zeros(time_window)
@@ -90,35 +90,35 @@ for scen in range(2,3):
 
 
 
-workbook=xlsxwriter.Workbook('BAU.xlsx')
-worksheet=workbook.add_worksheet()
-
-headers = ['time','store','BAU Cost','BAU carbon']
-row = 0
-col = 0
-for h in headers:
-    worksheet.write(row,col,h)
-    col +=1
-
-row = 1
-col = 0
-for t in time:
-    worksheet.write(row,col,t)
-    row +=1
-row = 1
-for store in store_range:
-    worksheet.write(row,col+1,store)
-    row +=1
-row = 1
-for BAU_cost in BAU_op_cost:
-    worksheet.write(row,col+2,BAU_cost)
-    row +=1
+    workbook=xlsxwriter.Workbook(scenario_names[scen]+' BAU.xlsx')
+    worksheet=workbook.add_worksheet()
     
-row = 1
-for carbon in BAU_carbon:
-    worksheet.write(row,col+3,carbon)
-    row +=1
-workbook.close()
+    headers = ['time','store','BAU Cost','BAU carbon']
+    row = 0
+    col = 0
+    for h in headers:
+        worksheet.write(row,col,h)
+        col +=1
+    
+    row = 1
+    col = 0
+    for t in time:
+        worksheet.write(row,col,t)
+        row +=1
+    row = 1
+    for store in store_range:
+        worksheet.write(row,col+1,store)
+        row +=1
+    row = 1
+    for BAU_cost in BAU_op_cost:
+        worksheet.write(row,col+2,BAU_cost)
+        row +=1
+        
+    row = 1
+    for carbon in BAU_carbon:
+        worksheet.write(row,col+3,carbon)
+        row +=1
+    workbook.close()
     
 
 

@@ -98,7 +98,8 @@ for scen in range(2,3):
     x_limit_top_co2_matrix = []
     
     for store_id in Store_id_range[:stores]:
-        print('store:%d' %store_id)
+        a = np.where(Store_id_range == store_id)
+        print('store:%d, %d/%d' %(store_id,a[0][0]+1,len(Store_id_range[:stores])))
         Carbonh = []
         OPEXh = []
         Capex_p0 = []
