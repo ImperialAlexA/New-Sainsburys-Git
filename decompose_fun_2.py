@@ -9,6 +9,7 @@ import numpy as np
 from sklearn import linear_model
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.metrics import r2_score
 
 def decompose(X_input,Y_input,spl):
     n_iter = 15
@@ -32,7 +33,8 @@ def decompose(X_input,Y_input,spl):
     for t in range(n_iter):
         try:            
             # generate randonmly the domain
-            l = np.random.rand(dim,spl-1)
+            l=np.random.uniform(0,1,size=[dim,spl-1])
+#            l = np.random.rand(dim,spl-1)
             l = np.sort(l,axis=1)
             lb0 = np.concatenate((0*np.ones((dim,1)),l), axis=1)
             ub0 = np.concatenate((l,np.ones((dim,1))), axis=1)
@@ -49,7 +51,9 @@ def decompose(X_input,Y_input,spl):
             intercept = 0*np.ones((1,d))
             lb = 0*np.ones((dim,d))
             ub = 0*np.ones((dim,d))    
-            res = 0*np.ones((1,d))           
+            res = 0*np.ones((1,d))   
+            rel_err = 0*np.ones((1,d))
+            R2 = 0*np.ones((1,d))
 
             for i in range(d):
                 if i == 0:
@@ -79,6 +83,11 @@ def decompose(X_input,Y_input,spl):
                 Y_fit = regr.predict(X0)
                 res[0,i] = np.sum(np.power(Y0-Y_fit,2))
                 resTot = np.sum(res)
+                try: 
+                    rel_err[0,i] = np.average(abs(Y0-Y_fit)/Y0*100)
+                except:
+                    rel_err[0,i] = np.average(abs(Y0-Y_fit)/Y_fit*100)
+                R2[0,i] = r2_score(Y0, Y_fit)
         except:    
               fault = fault + 1
               resTot = 10000
@@ -92,6 +101,9 @@ def decompose(X_input,Y_input,spl):
             intercept_best =intercept
             lb_best = lb
             ub_best = ub
+            rel_err_best = rel_err
+            res_best_by_domain = res
+            R2_best = R2
         res_best_history[t] =  res_best  
     
     div = 0*np.ones((dim,1)); div[:,0] = (X_input.max(axis=0) - X_input.min(axis=0))
@@ -101,47 +113,68 @@ def decompose(X_input,Y_input,spl):
     ub_best = np.multiply(ub_best,div) + X_input.min(axis=0)[:,None] 
     #interect and the otehr ub lb and res
     
-    return(p_best, intercept_best, lb_best,ub_best,res_best_history)
-              
-              
-
-if __name__ == "__main__":
-    
-    #to try
-    dim = 2
-    spl = 2
-    n_iter = 15    
-    n = 4000
-    X_input = np.random.rand(n,dim)  
-    #Y_input = 2*X_input[:,0]*X_input[:,1] + 3  + np.random.rand(n)
-    Y_input = abs(2*X_input[:,0] -2*0.5)+abs(X_input[:,1] -0.5) #+ 3  + np.random.rand(n)
-    
-    [p_best, intercept_best, lb_best, ub_best, res_best_history] = decompose(X_input,Y_input,spl)
-#    plt.plot(res_best_history)
-    print("coeff:", p_best)
-    print("intercept:", intercept_best)
     for i in range(p_best.shape[1]):
-                lb_IO = X_input > lb_best[:,i]
-                ub_IO = X_input < ub_best[:,i]    
-                mask = np.logical_and(np.all(lb_IO, axis = 1), np.all(ub_IO, axis = 1))
-                X0 = X_input[mask]
-                print(X0.shape)
-                Y_fit = intercept_best[:,i] +  np.dot(X0,p_best[:,i][:,None])
-                if i == 0:
-                   X_tot = X0
-                   Y_tot = Y_fit
-                else:    
-                    X_tot= np.append(X_tot,X0, axis =0)
-                    Y_tot=np.append(Y_tot,Y_fit)
+            lb_IO = X_input > lb_best[:,i]
+            ub_IO = X_input < ub_best[:,i]     
+            mask = np.logical_and(np.all(lb_IO, axis = 1), np.all(ub_IO, axis = 1))
+            X0 = X_input[mask]
+            Y_fit = intercept_best[:,i] +  np.dot(X0,p_best[:,i][:,None])
+            if i == 0:
+               X_tot = X0
+               Y_tot = Y_fit
+            else:    
+                X_tot= np.append(X_tot,X0, axis =0)
+                Y_tot=np.append(Y_tot,Y_fit)
 #                fig = plt.figure()
 #                ax = Axes3D(fig)
 #                ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
 #                ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 1)    
 
 
-    fig = plt.figure()
-    ax = Axes3D(fig)
-    ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
-    ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 1)
-   
+#    fig = plt.figure(1)
+#    ax = Axes3D(fig)
+#    ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 10)
+#    ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 15)
 
+    return(p_best, intercept_best, lb_best,ub_best,res_best_history,rel_err_best,res_best_by_domain,R2_best)
+              
+              
+
+#if __name__ == "__main__":
+    
+#    #to try
+#    dim = 2
+#    spl = 2
+#    n_iter = 15    
+#    n = 4000
+#    X_input = np.random.rand(n,dim)  
+#    #Y_input = 2*X_input[:,0]*X_input[:,1] + 3  + np.random.rand(n)
+#    Y_input = abs(2*X_input[:,0] -2*0.5)+abs(X_input[:,1] -0.5) #+ 3  + np.random.rand(n)
+#    
+#    [p_best, intercept_best, lb_best, ub_best, res_best_history] = decompose(X_input,Y_input,spl)
+##    plt.plot(res_best_history)
+#    print("coeff:", p_best)
+#    print("intercept:", intercept_best)
+#    for i in range(p_best.shape[1]):
+#                lb_IO = X_input > lb_best[:,i]
+#                ub_IO = X_input < ub_best[:,i]    
+#                mask = np.logical_and(np.all(lb_IO, axis = 1), np.all(ub_IO, axis = 1))
+#                X0 = X_input[mask]
+#                print(X0.shape)
+#                Y_fit = intercept_best[:,i] +  np.dot(X0,p_best[:,i][:,None])
+#                if i == 0:
+#                   X_tot = X0
+#                   Y_tot = Y_fit
+#                else:    
+#                    X_tot= np.append(X_tot,X0, axis =0)
+#                    Y_tot=np.append(Y_tot,Y_fit)
+##                fig = plt.figure()
+##                ax = Axes3D(fig)
+##                ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
+##                ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 1)    
+#
+#
+#    fig = plt.figure()
+#    ax = Axes3D(fig)
+#    ax.scatter(X_input[:,0], X_input[:,1], Y_input,s = 1)
+#    ax.scatter(X_tot[:,0], X_tot[:,1], Y_tot, c = 'r', s = 1)

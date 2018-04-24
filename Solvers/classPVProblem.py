@@ -75,13 +75,13 @@ class PVproblem:
 #        hidden_cost=2000 #£
 #        Roof_space_coeff=0.6 
 #        roof_available_area= roof_area*Roof_space_coeff #m2       
-        opti_savings=0
+
         tech_range = range(1,4) 
-#        df = pandas.read_excel('Irradiance-data.xlsx')
+
         
         for tech_id in tech_range:
             # initialize
-            opti_savings=0
+            optimal=0
             self.putTechPV(tech_id)
             tech_name = self.tech.PVtech_name
             tech_price = self.tech.PV_capex #(£/Wp,yr)
@@ -94,12 +94,11 @@ class PVproblem:
     
 
             if tech_weight / tech_area < self.roof_max_weight:
-                #irradiance = np.array([0,0,1,2,3,6,3,2,1,0,0])
+
                 Indiv_Elec_prod = (tech_eff * np.array(self.irradiance)*tech_area)/3600/2
                 N_panel = int(self.roof_available_area / tech_area)
                 Total_Elec_prod = N_panel * Indiv_Elec_prod 
                 panel_price = tech_price*tech_power
-               # Elec_demand = np.array([0, 0, 3, 5, 6, 7, 23, 34, 120, 23, 0])
                 
                 mask0=(Total_Elec_prod<self.Elec_demand).astype(int)
                 mask1=(Total_Elec_prod>self.Elec_demand).astype(int)
@@ -108,29 +107,40 @@ class PVproblem:
                 
                 # Costs
                 
-                #policies=0.001
-                #gas_demand = np.array([0, 0, 1, 3, 2, 3, 9, 15, 31, 6, 0])
-                Total_capex = N_panel * (panel_price + self.hidden_cost) 
-                Opex_savings = Total_Elec_prod *(self.elec_price + self.FIT )*10**(-2) 
-                op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)
+                
                 BAU_carbon = (self.Elec_demand*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
-                Carbon_PV=(Elec_grid*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
+                Carbon_PV=((self.Elec_demand-Total_Elec_prod)*self.cf_ele + self.gas_demand*self.cf_gas)/ 1000 # (tCO2)
                 Carbon_savings=(BAU_carbon-Carbon_PV) # (tCO2)
-                if np.sum(Opex_savings) > opti_savings: 
+                Annual_Carbon_savings=np.sum(Carbon_savings)
+                
+                Total_capex = N_panel * (panel_price + self.hidden_cost)
+                
+                BAU_opex = (self.Elec_demand*self.elec_price + self.gas_demand*self.gas_price)*10**(-2)
+                op_cost_HH_pound = (Elec_grid-Elec_surplus)*self.elec_price*10**(-2) + self.gas_demand*self.gas_price*10**(-2)-Total_Elec_prod*self.FIT*10**(-2)
+                opex_savings_test= BAU_opex-op_cost_HH_pound
+                Annual_Opex_savings_test = sum(opex_savings_test)
+                Opex_savings = Total_Elec_prod *(self.elec_price+self.FIT)*10**(-2)
+                Annual_Opex_savings=np.sum(Opex_savings)
+                
+                
+                [year_savings, payback, NPV5savings, ROI, Cum_disc_cash_flow] = self.calculate_financials(self.discount_rate,tech_lifetime, np.sum(BAU_opex), np.sum(op_cost_HH_pound),Total_capex)
+                
+                if NPV5savings > optimal: 
+                    optimal = NPV5savings
                     best_tech = tech_name
                     opti_capex=Total_capex
                     opti_ele_prod=Total_Elec_prod
-                    opti_savings= np.sum(Opex_savings)
+                    opti_savings= Annual_Opex_savings
                     opti_panel=N_panel
-                    opti_carbon=Carbon_savings
+                    opti_carbon=Annual_Carbon_savings
                 else:
                     pass 
-            return (best_tech, opti_savings, opti_capex,opti_ele_prod,opti_panel,opti_carbon)
+            return (best_tech, opti_savings, opti_capex,opti_ele_prod,opti_panel,opti_carbon,Cum_disc_cash_flow)
 
     def calculate_financials(self, discount_rate, tech_lifetime, year_BAU_cost, year_op_cost, Total_capex):
-        numb_years = 10 #(self.time_stop-self.time_start)/2/24/365
-        year_op_cost = sum(op_cost_HH_pound)/numb_years
-        year_BAU_cost = 1330 #sum(BAU_op_cost_HH_pound)/numb_years
+#        numb_years = (self.time_stop-self.time_start)/2/24/365
+#        year_op_cost = sum(op_cost_HH_pound)/numb_years
+#        year_BAU_cost = 1330 #sum(BAU_op_cost_HH_pound)/numb_years
         year_savings = year_BAU_cost - year_op_cost
         payback = Total_capex / year_savings
         ann_capex = -np.pmt(discount_rate, tech_lifetime, Total_capex)

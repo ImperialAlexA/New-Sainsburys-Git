@@ -116,14 +116,14 @@ class CHPproblem:
                 opti_ROI = ROI
                 opti_capex = Total_capex
                 opti_Cum_disc_cash_flow = Cum_disc_cash_flow
-                [opti_BAU_carbon, opti_CHP_carbon, opti_carbon_savings,biomethane_usage] = self.calculate_carbon(opti_part_load)
+                [opti_BAU_carbon, opti_CHP_carbon, opti_carbon_savings,biomethane_usage,elec_import] = self.calculate_carbon(opti_part_load)
 
         
         #restore previous values        
         if time_start is not None or time_stop is not None or table_string is not None: 
                 self.putUtility(time_start =old_time_start, time_stop = old_time_stop, table_string=old_price_table)
         financials = [opti_year_savings, opti_payback, opti_NPV5savings, opti_ROI, opti_Cum_disc_cash_flow, opti_capex]
-        carbon = [opti_BAU_carbon, opti_CHP_carbon, opti_carbon_savings,biomethane_usage]
+        carbon = [opti_BAU_carbon, opti_CHP_carbon, opti_carbon_savings,biomethane_usage,elec_import]
         
         return(opti_tech, opti_tech_name, opti_CHPQI, opti_part_load, financials, carbon, year_BAU_cost)
     
@@ -573,9 +573,9 @@ class CHPproblem:
         el_price = self.store.p_ele*mod[0]
         el_price_exp = self.store.p_ele_exp
         gas_price = self.store.p_gas*mod[1]
-        if self.NG_True_False ==True:
+        if self.NG_True_False is True:
             gas_price_CHP = self.store.p_gas*mod[1]
-        elif self.NG_True_False ==False:
+        elif self.NG_True_False is False:
             gas_price_CHP = (self.store.p_gas + mant_costs*el_efficiency*100)*mod[1]
         th_demand = self.store.d_gas*Boiler_eff                  ##  kWth HH  ##
         el_demand = self.store.d_ele                             ##  kWel HH  ##
@@ -906,9 +906,9 @@ class CHPproblem:
         check_psi[check_psi == 0] = 1
         if min(check_psi) < (psi_min):
             raise Exception("part load less than minimum part load")
-        if self.NG_True_False ==False:
+        if self.NG_True_False is False:
             biometh_CF=0.00039546
-        elif self.NG_True_False ==True:
+        elif self.NG_True_False is True:
             biometh_CF = 0.18416
         gas_CF = 0.18416
         ele_CF =   0.35156 
@@ -921,8 +921,11 @@ class CHPproblem:
                       1 - mask012) / Boiler_eff * biometh_CF) / 1000  # - ((a_el * part_load + b_el) * mask000 - el_demand) * (mask011) * ele_CF
         BAU_carbon = (el_demand * ele_CF + th_demand / Boiler_eff * gas_CF) / 1000  # (tCO2)
         carbon_savings = (BAU_carbon - carbon_CHP)
-        biomethane_usage=(a_fuel * part_load + b_fuel) * mask000 +(th_demand - (a_th * part_load + b_th) * mask000)
+        biomethane_usage=(a_fuel * part_load + b_fuel) * mask000 +(th_demand - (a_th * part_load + b_th) * mask000)* (
+                      1 - mask012) / Boiler_eff
+        
+        elec_import = (el_demand - (a_el * part_load + b_el) * mask000) * (1 - mask011) 
         if time_start is not None or time_stop is not None or table_string is not None:
             self.putUtility(time_start=old_time_start, time_stop=old_time_stop, table_string=old_price_table)
 
-        return (np.sum(BAU_carbon), np.sum(carbon_CHP), np.sum(carbon_savings),np.sum(biomethane_usage))
+        return (np.sum(BAU_carbon), np.sum(carbon_CHP), np.sum(carbon_savings),np.sum(biomethane_usage),np.sum(elec_import))

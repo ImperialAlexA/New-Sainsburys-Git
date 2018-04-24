@@ -168,12 +168,12 @@ class PV_CHP:
         #capex PV+CHP
         popt1, pcov1 = curve_fit(self.func_linear_3d, self.ind_variable, self.dep_variable1)
         #OPEX
-        [p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable2,spl)
+        [p_best, intercept_best, lb_best,ub_best,res_best_history,rel_err_best,res_best_by_domain,R2_best] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable2,spl)
         popt2 = np.vstack([p_best,intercept_best])
         opex_lb = lb_best
         opex_ub =ub_best
-        #Carbon
-        [p_best, intercept_best, lb_best,ub_best,res_best_history] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable3,spl)
+        # Carbon
+        [p_best, intercept_best, lb_best,ub_best,res_best_history,rel_err_best,res_best_by_domain,R2_best] = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable3,spl)
         popt3 = np.vstack([p_best,intercept_best])
         carbon_lb = lb_best
         carbon_ub =ub_best
@@ -186,7 +186,11 @@ class PV_CHP:
 
         return(popt1,popt2,popt3,popt4,popt5,opex_lb,opex_ub,carbon_lb,carbon_ub)
 
-    def error(self): #Calculate and print prediction error indicators
+    def error(self,spl= None): #Calculate and print prediction error indicators
+        if spl is not None:# number of domains the data will be split in for the piecewise linear regression
+            spl = spl
+        else:
+            spl = 2
 
         #NEED TO CHANGE FOR OPEX AND CARBON 
         coef = self.function_approx()
@@ -207,28 +211,24 @@ class PV_CHP:
         # OPEX
         # =============================================================================
         Target_test = self.dep_variable2
-        Target_pred = self.func_poly(self.ind_variable, *coef[1])
-        Relative_error=[]
-        Bias = []
-        for i in range(0, len(Target_pred)):
-            Relative_error.append((abs(abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
-            Bias.append(((abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
-
-        OPEX_fit = [mean_absolute_error(Target_test, Target_pred),np.average(Relative_error),np.average(Bias),r2_score(Target_test, Target_pred)]
+        sol = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable2,spl)
+        residual = sol[-2]
+        rel_err =sol[-3]
+        R2=sol[-1]
+        
+        OPEX_fit = [residual,rel_err,R2]
 
         # =============================================================================
         # CARBON
         # =============================================================================
 
         Target_test = self.dep_variable3
-        Target_pred = self.func_poly(self.ind_variable, *coef[2])
-        Relative_error=[]
-        Bias = []
-        for i in range(0, len(Target_pred)):
-            Relative_error.append((abs(abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
-            Bias.append(((abs(Target_pred[i])-abs(Target_test[i]))/max(abs(Target_pred[i]),abs(Target_test[i])))*100)
-
-        CARBON_fit= [mean_absolute_error(Target_test, Target_pred),np.average(Relative_error),np.average(Bias),r2_score(Target_test, Target_pred)]
+        sol = decfun.decompose(np.transpose(self.ind_variable),self.dep_variable3,spl)
+        residual = sol[-2]
+        rel_err =sol[-3]
+        R2=sol[-1]
+        
+        CARBON_fit= [residual,rel_err,R2]
 
         # =============================================================================
         # PV CAPEX

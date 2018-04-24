@@ -13,15 +13,14 @@ from gams import GamsWorkspace
 
 start = datetime.datetime.now()
 
-scenario_names = ['two degrees','slow progression','steady state','consumer power']
-scenarios = [[0.07,0.035,-0.0025,-0.015,-0.06],
+scenario_names = ['steady state','two degrees','slow progression','consumer power']
+scenarios = [[0.045,0.025,-0.0025,-0.0075,-0.03],
+             [0.07,0.035,-0.0025,-0.015,-0.06],
              [0.06,0.03,-0.0025,-0.01,-0.04],
-             [0.045,0.025,-0.0025,-0.0075,-0.03],
-             [0.035,0.035,-0.005,-0.0125,-0.03]] #[Two degrees:[ele,gas,CHP,PV,cf], Slow progression:[], Steady State:[],Consumer power: []]
+             [0.035,0.035,-0.005,-0.0125,-0.03]] #[Steady State:[ele,gas,CHP,PV,cf], Slow progression:[],Two degrees:[],Consumer power: []]
 
 
-
-for scen in range(2,3):
+for scen in range(0,1):
     print(scenario_names[scen])
 
     database_path = "Sainsburys.sqlite"
@@ -35,8 +34,8 @@ for scen in range(2,3):
     
     Store_id_range = np.delete(Store_id_range,44) # =store 2017 not included because of errors
     
-    time_window = 30 
-    stores = len(Store_id_range)
+    time_window = 1 
+    stores = 1
     year_start = 2020
     year_stop = 2050
     NG_True_False = True #True: Natural Gas is used as fuel for CHP, False:Biomethane is used as fuel for CHP
@@ -206,7 +205,7 @@ for scen in range(2,3):
         p4.add_record(time_j).value = CO2_target[j]
     
     
-    db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\" +scenario_names[scen] +".gdx")
+#    db.export("C:\\Users\\Anatole\\Documents\\GitHub\\New-Sainsburys-Git\\" +scenario_names[scen] +".gdx")
 
 end = datetime.datetime.now()
 print(end-start)
